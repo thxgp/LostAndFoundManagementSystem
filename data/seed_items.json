@@ -1,0 +1,72 @@
+[
+  {
+    "item_id": 1,
+    "title": "MacBook Pro 14 M2 Space Gray",
+    "category": "Electronics",
+    "description": "Left in Library 2nd floor silent study area, has sticker 'Code is Poetry'.",
+    "item_type": "FOUND",
+    "location": "Central Library 2nd Floor",
+    "status": "IN_CUSTODY",
+    "reporter_name": "Aarav Sharma",
+    "reporter_contact": "aarav.sharma@campus.edu",
+    "reward_or_value": 125000.0,
+    "reported_date": "2026-09-01 10:15:00",
+    "updated_at": "2026-09-01 10:15:00"
+  },
+  {
+    "item_id": 2,
+    "title": "Leather Bifold Wallet with ID Cards",
+    "category": "Keys/Wallets",
+    "description": "Brown fossil wallet containing student ID (ID: 26MCC042) and campus meal card.",
+    "item_type": "FOUND",
+    "location": "Student Cafeteria Block C",
+    "status": "IN_CUSTODY",
+    "reporter_name": "Priya Patel",
+    "reporter_contact": "priya.patel@campus.edu",
+    "reward_or_value": 2500.0,
+    "reported_date": "2026-09-01 12:30:00",
+    "updated_at": "2026-09-01 12:30:00"
+  },
+  {
+    "item_id": 3,
+    "title": "Sony WH-1000XM5 Headphones",
+    "category": "Electronics",
+    "description": "Black noise cancelling headphones in black zipper carrying case.",
+    "item_type": "LOST",
+    "location": "Computer Science Lab 304",
+    "status": "REPORTED",
+    "reporter_name": "Rohan Deshmukh",
+    "reporter_contact": "rohan.d@campus.edu",
+    "reward_or_value": 28000.0,
+    "reported_date": "2026-09-01 14:00:00",
+    "updated_at": "2026-09-01 14:00:00"
+  },
+  {
+    "item_id": 4,
+    "title": "Campus Identity Card & Access Badge",
+    "category": "Documents/Cards",
+    "description": "Student ID card for Ananya Iyer, Department of AI & Data Science.",
+    "item_type": "FOUND",
+    "location": "Auditorium Main Gate",
+    "status": "IN_CUSTODY",
+    "reporter_name": "Security Desk Alpha",
+    "reporter_contact": "security.alpha@campus.edu",
+    "reward_or_value": 200.0,
+    "reported_date": "2026-09-02 09:00:00",
+    "updated_at": "2026-09-02 09:00:00"
+  },
+  {
+    "item_id": 5,
+    "title": "North Face Waterproof Backpack",
+    "category": "Bags/Backpacks",
+    "description": "Dark blue backpack containing ADBMS notebook and scientific calculator.",
+    "item_type": "LOST",
+    "location": "Sports Complex Badminton Court",
+    "status": "REPORTED",
+    "reporter_name": "Vikram Malhotra",
+    "reporter_contact": "vikram.m@campus.edu",
+    "reward_or_value": 4500.0,
+    "reported_date": "2026-09-02 11:20:00",
+    "updated_at": "2026-09-02 11:20:00"
+  }
+]
