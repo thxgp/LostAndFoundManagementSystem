@@ -151,11 +151,14 @@ class DatabaseManager:
             cursor.execute("""
             CREATE TABLE IF NOT EXISTS audit_actions (
                 action_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                action_type TEXT NOT NULL,
                 item_id INTEGER,
+                performed_by_user_id INTEGER,
+                action_type TEXT NOT NULL,
                 snapshot_before TEXT,
                 snapshot_after TEXT,
-                performed_at TEXT
+                performed_at TEXT,
+                FOREIGN KEY (item_id) REFERENCES items(item_id) ON DELETE SET NULL,
+                FOREIGN KEY (performed_by_user_id) REFERENCES users(user_id) ON DELETE SET NULL
             );
             """)
             self._sqlite_conn.commit()

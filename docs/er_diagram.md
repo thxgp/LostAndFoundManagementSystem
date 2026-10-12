@@ -33,7 +33,6 @@ erDiagram
         INT category_id PK "Primary Key"
         VARCHAR(60) category_name "Electronics, Wallets, Bags, etc."
         VARCHAR(200) description "Category description"
-        DECIMAL daily_storage_rate "Daily custody fee rate"
     }
 
     LOCATIONS {
@@ -84,7 +83,7 @@ erDiagram
         VARCHAR(20) locker_code "Locker slot identifier e.g. L-104"
         DATE custody_start_date "Date item entered custody"
         DATE release_date "Date item retrieved or disposed"
-        DECIMAL total_custody_fee "Computed storage/custody charges"
+        VARCHAR(100) remarks "Custody notes & security status"
     }
 ```
 

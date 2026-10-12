@@ -14,6 +14,9 @@ class TestServiceIntegration(unittest.TestCase):
     def setUp(self):
         # Initialize service with SQLite fallback for deterministic testing
         self.service = LostAndFoundService(prefer_mysql=False)
+        # Drain any existing claims in queue for clean FIFO test state
+        while not self.service.claim_queue.is_empty():
+            self.service.claim_queue.dequeue()
 
     def test_report_item_and_traversal(self):
         initial_count = len(self.service.get_all_items())

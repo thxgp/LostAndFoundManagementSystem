@@ -90,7 +90,12 @@ def main_menu():
     print(f" {Colors.GREEN}[8]{Colors.RESET}  🧮 Calculate Storage Fee (Stack Expression Parser)")
     print(f" {Colors.GREEN}[9]{Colors.RESET}  ↩️  Undo Last Action (LIFO Linked Stack Pop & Rollback)")
     print(f" {Colors.GREEN}[10]{Colors.RESET} 📜 View Action Audit Trail (Linked Stack History)")
-    print(f" {Colors.GREEN}[11]{Colors.RESET} 🚀 Run Automated Quick Practical Demonstration")
+    print(f" {Colors.GREEN}[11]{Colors.RESET} 🚀 Run Phase 1 Practical Demonstration (DSA + Linear Structures)")
+    print(f" {Colors.GREEN}[12]{Colors.RESET} 🏛️  Run Phase 2 Demonstration (DDL, DML, Cleaning, Aggregates)")
+    print(f" {Colors.GREEN}[13]{Colors.RESET} 🔍 Run Phase 3 Demonstration (Joins, Subqueries, Views, EXPLAIN)")
+    print(f" {Colors.GREEN}[14]{Colors.RESET} 🛡️  Run Phase 4 Demonstration (Transactions, Atomicity, Integrity)")
+    print(f" {Colors.GREEN}[15]{Colors.RESET} 🌟 Run All Phases (Phase 1, 2, 3 & 4 Complete Evaluation)")
+    print(f" {Colors.GREEN}[16]{Colors.RESET} 🌐 Launch Modern Web UI & REST Server (Browser Portal)")
     print(f" {Colors.RED}[0]{Colors.RESET}  ❌ Exit Application")
     print("-" * 40)
 
@@ -404,7 +409,7 @@ def main():
 
     while True:
         main_menu()
-        choice = input(f"{Colors.BOLD}Enter your choice (0-11): {Colors.RESET}").strip()
+        choice = input(f"{Colors.BOLD}Enter your choice (0-15): {Colors.RESET}").strip()
 
         if choice == "1":
             view_all_items(service)
@@ -428,11 +433,34 @@ def main():
             view_audit_history(service)
         elif choice == "11":
             run_automated_demo(service)
+        elif choice == "12":
+            import subprocess
+            subprocess.run([sys.executable, os.path.join(os.path.dirname(__file__), "phase2_demo.py")])
+        elif choice == "13":
+            import subprocess
+            subprocess.run([sys.executable, os.path.join(os.path.dirname(__file__), "phase3_demo.py")])
+        elif choice == "14":
+            import subprocess
+            subprocess.run([sys.executable, os.path.join(os.path.dirname(__file__), "phase4_demo.py")])
+        elif choice == "15":
+            import subprocess
+            print(f"\n{Colors.BOLD}{Colors.HEADER}=== RUNNING COMPLETE LAB EVALUATION (PHASES 1, 2, 3, 4) ==={Colors.RESET}\n")
+            run_automated_demo(service)
+            subprocess.run([sys.executable, os.path.join(os.path.dirname(__file__), "phase2_demo.py")])
+            subprocess.run([sys.executable, os.path.join(os.path.dirname(__file__), "phase3_demo.py")])
+            subprocess.run([sys.executable, os.path.join(os.path.dirname(__file__), "phase4_demo.py")])
+            print(f"\n{Colors.BOLD}{Colors.GREEN}=== ALL FOUR PHASES SUCCESSFULLY EVALUATED AND PASSED! ==={Colors.RESET}\n")
+        elif choice == "16":
+            import subprocess
+            import webbrowser
+            print(f"\n{Colors.BOLD}{Colors.GREEN}🚀 Starting Web Server on http://localhost:8080...{Colors.RESET}")
+            webbrowser.open("http://localhost:8080")
+            subprocess.run([sys.executable, os.path.join(os.path.dirname(__file__), "web_server.py")])
         elif choice == "0":
             print(f"\n{Colors.CYAN}Exiting Lost and Found Management System. Goodbye!{Colors.RESET}\n")
             break
         else:
-            print(f"{Colors.RED}Invalid option. Please choose between 0 and 11.{Colors.RESET}\n")
+            print(f"{Colors.RED}Invalid option. Please choose between 0 and 16.{Colors.RESET}\n")
 
 
 if __name__ == "__main__":

@@ -79,17 +79,30 @@ If MySQL is not running on the host machine, the system automatically and seamle
 
 ## 🚀 How to Run
 
-### 1. Launch Interactive CLI
+### 1. Launch Modern Web UI & REST Server (Recommended)
+You can launch the web interface directly using Python (zero extra packages required):
+```powershell
+python web_server.py
+```
+Then open your browser at **`http://localhost:8080`**.
+Alternatively, select Option `16` from `main.py`!
+
+### 2. Launch Interactive CLI
 ```powershell
 python main.py
 ```
 
-### 2. Run Automated End-to-End Demonstration
-Select Option `11` from the main menu inside `main.py`.
-
-### 3. Run Automated Unit & Integration Tests
+### 3. Run Automated End-to-End Demonstration
+Select Option `11` from the main menu inside `main.py`, or run:
 ```powershell
-python -m unittest discover -s tests
+python -c "from src.service import LostAndFoundService; from main import run_automated_demo; run_automated_demo(LostAndFoundService(prefer_mysql=False))"
+```
+
+### 4. Run Automated Practical Suites
+```powershell
+python phase2_demo.py    # Phase 2: DDL, DML, Aggregates
+python phase3_demo.py    # Phase 3: Joins, Subqueries, Views & EXPLAIN
+python phase4_demo.py    # Phase 4: Transactions, ACID Commit/Rollback, Audit
 ```
 
 ---
