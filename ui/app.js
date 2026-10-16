@@ -238,10 +238,14 @@ function setupTabs() {
     btn.addEventListener("click", () => {
       const targetTab = btn.getAttribute("data-tab");
 
-      tabBtns.forEach(b => b.classList.remove("active"));
+      tabBtns.forEach(b => {
+        b.classList.remove("active");
+        b.setAttribute("aria-selected", "false");
+      });
       tabPanes.forEach(p => p.classList.remove("active"));
 
       btn.classList.add("active");
+      btn.setAttribute("aria-selected", "true");
       const activePane = document.getElementById(targetTab);
       if (activePane) activePane.classList.add("active");
     });
@@ -249,16 +253,31 @@ function setupTabs() {
 }
 
 // Modal handling
+let modalReturnFocus = null;
+
+function openModal(modal) {
+  modalReturnFocus = document.activeElement;
+  modal.classList.add("open");
+  const firstField = modal.querySelector("input, select, textarea");
+  if (firstField) firstField.focus();
+}
+
+function closeModal(modal) {
+  modal.classList.remove("open");
+  if (modalReturnFocus && document.contains(modalReturnFocus)) modalReturnFocus.focus();
+  modalReturnFocus = null;
+}
+
 function setupModals() {
   // Open Report Modal
   el.btnReportItem.addEventListener("click", () => {
-    el.modalReportItem.classList.add("open");
+    openModal(el.modalReportItem);
   });
 
   // Open Claim Modal
   el.btnNewClaimTrigger.addEventListener("click", () => {
     populateClaimSelectDropdown();
-    el.modalSubmitClaim.classList.add("open");
+    openModal(el.modalSubmitClaim);
   });
 
   // Close buttons
@@ -266,8 +285,31 @@ function setupModals() {
     btn.addEventListener("click", () => {
       const modalId = btn.getAttribute("data-close");
       const modal = document.getElementById(modalId);
-      if (modal) modal.classList.remove("open");
+      if (modal) closeModal(modal);
     });
+  });
+
+  // Esc closes the open modal; Tab stays inside it
+  document.addEventListener("keydown", (e) => {
+    const modal = document.querySelector(".modal-overlay.open");
+    if (!modal) return;
+    if (e.key === "Escape") {
+      closeModal(modal);
+      return;
+    }
+    if (e.key === "Tab") {
+      const focusable = [...modal.querySelectorAll("button, input, select, textarea")].filter(f => !f.disabled);
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
   });
 
   // Form Submissions
@@ -295,16 +337,11 @@ function setupEvaluatorSliders() {
     const score = (rpnVariables.desc_match * 0.4) + (rpnVariables.serial_match * 0.4) + (rpnVariables.photo_match * 0.2);
     el.calculatedScoreDisplay.textContent = `${score.toFixed(2)}%`;
 
-    if (score >= 75.0) {
-      el.calculatedScoreDisplay.style.color = "var(--emerald)";
-      el.decisionText.textContent = "APPROVED";
-      el.decisionText.style.color = "var(--emerald)";
-      el.btnSettleApprove.disabled = false;
-    } else {
-      el.calculatedScoreDisplay.style.color = "var(--rose)";
-      el.decisionText.textContent = "REJECTED";
-      el.decisionText.style.color = "var(--rose)";
-    }
+    const passed = score >= 75.0;
+    el.calculatedScoreDisplay.classList.toggle("is-fail", !passed);
+    el.decisionText.classList.toggle("is-fail", !passed);
+    el.decisionText.textContent = passed ? "APPROVED" : "REJECTED";
+    if (passed) el.btnSettleApprove.disabled = false;
   };
 
   el.sliderDescMatch.addEventListener("input", updateEvaluator);
@@ -338,7 +375,7 @@ async function loadAllData() {
     const statusData = await res.json();
     state.isLiveApi = true;
     el.dbEngineLabel.textContent = `${statusData.db_type} Database Connected`;
-    el.dbEngineLabel.parentElement.style.borderColor = "rgba(16, 185, 129, 0.4)";
+    el.dbEngineLabel.parentElement.classList.remove("is-local");
 
     // Fetch items
     const itemsRes = await fetch("/api/items");
@@ -368,7 +405,7 @@ async function loadAllData() {
     console.warn("REST API connection unavailable. Operating in high-fidelity local mode.", err);
     state.isLiveApi = false;
     el.dbEngineLabel.textContent = "Local High-Fidelity Engine (Portable)";
-    el.dbEngineLabel.parentElement.style.borderColor = "rgba(99, 102, 241, 0.4)";
+    el.dbEngineLabel.parentElement.classList.add("is-local");
 
     if (state.items.length === 0) {
       state.items = [...OFFLINE_SEED_ITEMS];
@@ -428,6 +465,21 @@ function updateMetrics() {
 // RENDERERS
 // ==============================================================================
 
+const STATUS_DISPLAY = {
+  IN_CUSTODY: { label: "In custody", cls: "tag-custody" },
+  CLAIM_PENDING: { label: "Claim pending", cls: "tag-pending" },
+  VERIFIED_RETURNED: { label: "Returned to owner", cls: "tag-returned" },
+  REPORTED: { label: "Reported", cls: "tag-reported" }
+};
+
+function statusDisplay(status) {
+  return STATUS_DISPLAY[status] || { label: status, cls: "tag-neutral" };
+}
+
+function lockerNumber(code) {
+  return String(code).replace(/^LOCKER-/, "");
+}
+
 function renderInventoryCards() {
   const query = el.searchInventory.value.trim().toLowerCase();
   const typeFilter = el.filterType.value;
@@ -449,10 +501,9 @@ function renderInventoryCards() {
 
   if (filtered.length === 0) {
     el.itemsContainer.innerHTML = `
-      <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: var(--text-muted); background: var(--bg-card); border-radius: var(--radius-md); border: 1px dashed var(--border-subtle);">
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 12px; color: var(--text-dim);"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <h4 style="font-size: 1.1rem; color: var(--text-main); margin-bottom: 4px;">No matching records found</h4>
-        <p style="font-size: 0.85rem;">Try adjusting your keyword search or filter criteria.</p>
+      <div class="empty-state">
+        <h4>No items match</h4>
+        <p>Clear the search or change a filter to see more items.</p>
       </div>
     `;
     return;
@@ -460,45 +511,41 @@ function renderInventoryCards() {
 
   el.itemsContainer.innerHTML = filtered.map(item => {
     const isFound = item.item_type === "FOUND";
-    const statusClass = item.status === "IN_CUSTODY" ? "tag-custody" :
-                        item.status === "VERIFIED_RETURNED" ? "tag-returned" :
-                        item.status === "CLAIM_PENDING" ? "tag-pending" : "tag-lost";
-
-    const typeClass = isFound ? "tag-found" : "tag-lost";
+    const status = statusDisplay(item.status);
+    const isHeld = Boolean(item.locker_code) && item.status !== "VERIFIED_RETURNED";
     const valFormatted = `₹${(parseFloat(item.reward_or_value) || 0).toLocaleString('en-IN')}`;
+    const lockerPlate = item.locker_code
+      ? `<span class="locker-plate ${isHeld ? '' : 'is-released'}" title="${escapeHtml(item.locker_code)}">${escapeHtml(lockerNumber(item.locker_code))}</span>`
+      : `<span class="locker-plate is-none">${isFound ? 'No locker assigned' : 'Owner is searching'}</span>`;
 
     return `
-      <div class="item-card" data-id="${item.item_id}">
-        <div>
-          <div class="item-card-header">
-            <div class="item-badge-group">
-              <span class="tag ${typeClass}">${item.item_type}</span>
-              <span class="tag ${statusClass}">${item.status}</span>
-              <span class="tag" style="background: rgba(255, 255, 255, 0.05); color: var(--text-muted);">${item.category}</span>
-            </div>
-            <span class="item-id-pill">#${item.item_id}</span>
+      <article class="item-card ${isHeld ? 'is-held' : ''}" data-id="${item.item_id}">
+        <span class="tag-hole" aria-hidden="true"></span>
+        <div class="item-card-header">
+          <div class="item-badge-group">
+            <span class="tag ${isFound ? 'tag-found' : 'tag-lost'}">${isFound ? 'Found' : 'Lost'}</span>
+            <span class="tag ${status.cls}">${escapeHtml(status.label)}</span>
+            <span class="tag tag-neutral">${escapeHtml(item.category)}</span>
           </div>
+          <span class="item-id-pill">#${item.item_id}</span>
+        </div>
 
-          <h3 class="item-title">${escapeHtml(item.title)}</h3>
-          <p class="item-desc">${escapeHtml(item.description)}</p>
+        ${lockerPlate}
+        <h3 class="item-title">${escapeHtml(item.title)}</h3>
+        <p class="item-desc">${escapeHtml(item.description)}</p>
 
-          <div class="item-meta-row">
-            <div class="meta-item">
-              <span class="meta-label">Location</span>
-              <span class="meta-val">${escapeHtml(item.location)}</span>
-            </div>
-            <div class="meta-item">
-              <span class="meta-label">Valuation</span>
-              <span class="meta-val" style="color: var(--cyan);">${valFormatted}</span>
-            </div>
-            <div class="meta-item">
-              <span class="meta-label">Reported By</span>
-              <span class="meta-val">${escapeHtml(item.reporter_name)}</span>
-            </div>
-            <div class="meta-item">
-              <span class="meta-label">Locker</span>
-              <span class="meta-val" style="font-family: 'JetBrains Mono'; color: var(--primary);">${item.locker_code || 'N/A'}</span>
-            </div>
+        <div class="item-meta-row">
+          <div class="meta-item">
+            <span class="meta-label">Location</span>
+            <span class="meta-val" title="${escapeHtml(item.location)}">${escapeHtml(item.location)}</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Reported by</span>
+            <span class="meta-val" title="${escapeHtml(item.reporter_name)}">${escapeHtml(item.reporter_name)}</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Value</span>
+            <span class="meta-val is-money">${valFormatted}</span>
           </div>
         </div>
 
@@ -508,19 +555,19 @@ function renderInventoryCards() {
               File Claim
             </button>
           ` : `
-            <span style="font-size: 0.78rem; color: var(--text-dim);">${item.reported_date ? item.reported_date.split(' ')[0] : ''}</span>
+            <span class="item-date">${item.reported_date ? item.reported_date.split(' ')[0] : ''}</span>
           `}
 
-          <div style="display: flex; gap: 6px;">
+          <div class="item-actions-group">
             <button class="btn btn-secondary btn-sm" onclick="cycleStatus(${item.item_id})" title="Advance Status">
               Toggle Status
             </button>
-            <button class="btn btn-danger btn-sm" onclick="deleteItemRecord(${item.item_id})" title="Delete record">
-              &times;
+            <button class="btn btn-danger btn-sm" onclick="deleteItemRecord(${item.item_id})" title="Delete record" aria-label="Delete record #${item.item_id}">
+              <svg class="icon icon-sm" aria-hidden="true"><use href="#i-trash"/></svg>
             </button>
           </div>
         </div>
-      </div>
+      </article>
     `;
   }).join("");
 }
@@ -530,9 +577,9 @@ function renderClaimsQueue() {
 
   if (pendingClaims.length === 0) {
     el.queueItemsContainer.innerHTML = `
-      <div style="text-align: center; padding: 40px 10px; color: var(--text-muted);">
-        <p style="font-size: 0.9rem; margin-bottom: 6px;">No pending claims in FIFO queue.</p>
-        <span style="font-size: 0.75rem; color: var(--text-dim);">All verification requests are cleared.</span>
+      <div class="empty-state">
+        <h4>No claims waiting</h4>
+        <p>File a claim to add it to the verification queue.</p>
       </div>
     `;
     el.selectedClaimTag.textContent = "Queue Empty";
@@ -552,15 +599,13 @@ function renderClaimsQueue() {
     return `
       <div class="queue-ticket ${isSelected ? 'active' : ''}" onclick="selectClaim(${claim.claim_id})">
         <span class="queue-pos-badge">Queue Pos: #${index + 1}</span>
-        <h4 style="font-family: 'Outfit'; font-size: 1rem; color: var(--text-main); margin-bottom: 4px;">
+        <h4 class="ticket-title">
           Claim #${claim.claim_id}: ${escapeHtml(claim.item_title || 'Item #' + claim.item_id)}
         </h4>
-        <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 6px;">
-          Claimant: <strong style="color: var(--text-main);">${escapeHtml(claim.claimant_name)}</strong> (${escapeHtml(claim.claimant_contact)})
+        <div class="ticket-claimant">
+          Claimant: <strong>${escapeHtml(claim.claimant_name)}</strong> (${escapeHtml(claim.claimant_contact)})
         </div>
-        <p style="font-size: 0.78rem; color: var(--text-dim); line-height: 1.4; background: rgba(0,0,0,0.2); padding: 8px; border-radius: var(--radius-sm);">
-          "${escapeHtml(claim.proof_description)}"
-        </p>
+        <p class="ticket-proof">${escapeHtml(claim.proof_description)}</p>
       </div>
     `;
   }).join("");
@@ -577,31 +622,36 @@ function selectClaim(claimId) {
 
 function renderLockersGrid() {
   if (state.lockers.length === 0) {
-    el.lockersContainer.innerHTML = `<p style="color: var(--text-muted);">No storage lockers allocated.</p>`;
+    el.lockersContainer.innerHTML = `
+      <div class="empty-state">
+        <h4>No lockers in use</h4>
+        <p>Found items get a locker when they are reported.</p>
+      </div>
+    `;
     return;
   }
 
   el.lockersContainer.innerHTML = state.lockers.map(l => {
     const isOccupied = !l.release_date;
-    const daysText = `${l.days_held} days held`;
     return `
       <div class="locker-card ${isOccupied ? 'occupied' : 'released'}">
+        <span class="tag-hole" aria-hidden="true"></span>
         <div class="locker-code-tag">
-          <span>${escapeHtml(l.locker_code)}</span>
+          <span class="locker-plate" title="${escapeHtml(l.locker_code)}">${escapeHtml(lockerNumber(l.locker_code))}</span>
           <span class="tag ${isOccupied ? 'tag-custody' : 'tag-returned'}">
-            ${isOccupied ? 'IN CUSTODY' : 'RELEASED'}
+            ${isOccupied ? 'In custody' : 'Released'}
           </span>
         </div>
-        <h4 style="font-family: 'Outfit'; font-size: 1.05rem; margin-bottom: 6px; color: var(--text-main);">
+        <h4 class="locker-title">
           ${escapeHtml(l.item_title || 'Stored Item #' + l.item_id)}
         </h4>
-        <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px;">
-          Custody Start: ${escapeHtml(l.custody_start_date || 'N/A')}
+        <div class="locker-dates">
+          Custody start: ${escapeHtml(l.custody_start_date || 'N/A')}
           ${l.release_date ? `<br>Discharged: ${escapeHtml(l.release_date)}` : ''}
         </div>
-        <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-subtle); padding-top: 8px;">
-          <span class="locker-days-count">${daysText}</span>
-          <span style="font-size: 0.72rem; color: var(--emerald);">Zero Fee Campus Service</span>
+        <div class="locker-foot">
+          <span class="locker-days-count">${l.days_held} days held</span>
+          <span class="locker-fee">Zero fee campus service</span>
         </div>
       </div>
     `;
@@ -610,21 +660,25 @@ function renderLockersGrid() {
 
 function renderAuditTimeline() {
   if (state.audit.length === 0) {
-    el.auditTimelineContainer.innerHTML = `<p style="color: var(--text-muted);">Audit stack is empty.</p>`;
+    el.auditTimelineContainer.innerHTML = `
+      <div class="empty-state">
+        <h4>No actions recorded</h4>
+        <p>Reporting, claiming or updating an item adds an entry here.</p>
+      </div>
+    `;
     return;
   }
 
   el.auditTimelineContainer.innerHTML = state.audit.map(a => {
-    const beforeStr = typeof a.snapshot_before === 'object' ? JSON.stringify(a.snapshot_before, null, 2) : a.snapshot_before;
     const afterStr = typeof a.snapshot_after === 'object' ? JSON.stringify(a.snapshot_after, null, 2) : a.snapshot_after;
 
     return `
       <div class="timeline-item">
         <div class="timeline-header">
-          <span class="timeline-type" style="color: var(--primary);">${escapeHtml(a.action_type)}</span>
-          <span style="font-size: 0.75rem; color: var(--text-dim);">${escapeHtml(a.performed_at || '')}</span>
+          <span class="timeline-type">${escapeHtml(a.action_type)}</span>
+          <span class="timeline-time">${escapeHtml(a.performed_at || '')}</span>
         </div>
-        <div style="font-size: 0.85rem; color: var(--text-main); margin-bottom: 6px;">
+        <div class="timeline-target">
           Target: Item ID #${a.item_id || 'Global'}
         </div>
         ${afterStr ? `<pre class="json-snapshot">Snapshot: ${escapeHtml(afterStr)}</pre>` : ''}
@@ -644,11 +698,11 @@ function renderCategoryAnalytics() {
 
   el.categoryAnalyticsTbody.innerHTML = cats.map(c => `
     <tr>
-      <td style="font-weight: 700; color: var(--text-main);">${escapeHtml(c.category_name)}</td>
+      <td class="cell-strong">${escapeHtml(c.category_name)}</td>
       <td>${c.total_items}</td>
       <td><span class="tag tag-found">${c.found_count}</span></td>
       <td><span class="tag tag-lost">${c.lost_count}</span></td>
-      <td style="font-family: 'JetBrains Mono'; color: var(--cyan); font-weight: 700;">₹${(parseFloat(c.total_declared_value) || 0).toLocaleString('en-IN')}</td>
+      <td class="cell-money">₹${(parseFloat(c.total_declared_value) || 0).toLocaleString('en-IN')}</td>
     </tr>
   `).join("");
 }
@@ -714,7 +768,7 @@ async function handleReportItemSubmit(e) {
       showToast(`Item #${newItem.item_id} registered successfully!`, "success");
     }
 
-    el.modalReportItem.classList.remove("open");
+    closeModal(el.modalReportItem);
     el.formReportItem.reset();
     await loadAllData();
 
@@ -726,7 +780,7 @@ async function handleReportItemSubmit(e) {
 function initiateClaimForItem(itemId) {
   populateClaimSelectDropdown();
   el.claimItemSelect.value = String(itemId);
-  el.modalSubmitClaim.classList.add("open");
+  openModal(el.modalSubmitClaim);
 }
 
 function populateClaimSelectDropdown() {
@@ -773,7 +827,7 @@ async function handleSubmitClaimSubmit(e) {
       showToast(`Claim #${newClaim.claim_id} enqueued in FIFO Queue!`, "success");
     }
 
-    el.modalSubmitClaim.classList.remove("open");
+    closeModal(el.modalSubmitClaim);
     el.formSubmitClaim.reset();
     await loadAllData();
 
@@ -986,6 +1040,9 @@ function showToast(message, type = "info") {
     <span>${type === 'success' ? '✔' : type === 'error' ? '✖' : 'ℹ'}</span>
     <span>${escapeHtml(message)}</span>
   `;
+  while (el.toastContainer.children.length >= 2) {
+    el.toastContainer.firstElementChild.remove();
+  }
   el.toastContainer.appendChild(toast);
 
   setTimeout(() => {
