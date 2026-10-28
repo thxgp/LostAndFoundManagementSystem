@@ -724,21 +724,30 @@ class LFMSRequestHandler(SimpleHTTPRequestHandler):
             self._send_json({"error": f"Failed running {phase}: {str(e)}"}, 500)
 
 
-def start_server():
-    server_address = ("", PORT)
-    httpd = ThreadedHTTPServer(server_address, LFMSRequestHandler)
-    print("\n=======================================================")
-    print("  [+] LOST AND FOUND SYSTEM - WEB SERVER ACTIVE")
-    print(f"  Local URL: http://localhost:{PORT}")
-    print(f"  Database : {service.db.db_type}")
-    print(f"  Web Root : {UI_DIR}")
-    print("=======================================================\n")
-    try:
-        httpd.serve_forever()
-    except KeyboardInterrupt:
-        print("\nShutting down server.")
-        httpd.server_close()
+def start_server(preferred_port=PORT):
+    ports_to_try = [preferred_port, 8085, 8081, 5050]
+    for p in ports_to_try:
+        try:
+            server_address = ("", p)
+            httpd = ThreadedHTTPServer(server_address, LFMSRequestHandler)
+            print("\n=======================================================")
+            print("  [+] LOST AND FOUND SYSTEM - WEB SERVER ACTIVE")
+            print(f"  Local URL: http://localhost:{p}")
+            print(f"  Database : {service.db.db_type}")
+            print(f"  Web Root : {UI_DIR}")
+            print("=======================================================\n")
+            try:
+                httpd.serve_forever()
+            except KeyboardInterrupt:
+                print("\nShutting down server.")
+                httpd.server_close()
+            return
+        except OSError:
+            print(f"  [!] Port {p} is unavailable or occupied. Attempting next port...")
+            continue
+    print("  [!] Error: Unable to bind to any available port.")
 
 
 if __name__ == "__main__":
     start_server()
+
