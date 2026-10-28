@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Campus Lost & Found Management System | Enterprise Relational Hub</title>
-  <meta name="description" content="ADBMS Enterprise Relational Database and Data Structures Management System for Campus Lost and Found Property Recovery.">
+  <title>Campus Lost & Found Recovery Hub</title>
+  <meta name="description" content="Campus Lost and Found Management System for reporting, cataloging, and recovering misplaced belongings.">
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,7 +15,7 @@
 </head>
 <body>
 
-  <!-- Icon set: 24px grid, 1.75 stroke, round caps (styled by .icon) -->
+  <!-- Icon set: 24px grid, 1.75 stroke, round caps -->
   <svg xmlns="http://www.w3.org/2000/svg" class="icon-sprite" aria-hidden="true">
     <symbol id="i-brand" viewBox="0 0 24 24"><path d="M3 12.6V4.5A1.5 1.5 0 0 1 4.5 3h8.1a1.5 1.5 0 0 1 1.06.44l6.9 6.9a1.5 1.5 0 0 1 0 2.12l-8.1 8.1a1.5 1.5 0 0 1-2.12 0l-6.9-6.9A1.5 1.5 0 0 1 3 12.6z"/><circle cx="7.5" cy="7.5" r="1.2" fill="currentColor"/><path d="M9.5 13l2.2 2.2 4-4"/></symbol>
     <symbol id="i-tag" viewBox="0 0 24 24"><path d="M3 12.6V4.5A1.5 1.5 0 0 1 4.5 3h8.1a1.5 1.5 0 0 1 1.06.44l6.9 6.9a1.5 1.5 0 0 1 0 2.12l-8.1 8.1a1.5 1.5 0 0 1-2.12 0l-6.9-6.9A1.5 1.5 0 0 1 3 12.6z"/><circle cx="7.5" cy="7.5" r="1.2" fill="currentColor"/></symbol>
@@ -33,7 +33,6 @@
     <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></symbol>
     <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></symbol>
     <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></symbol>
-    <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12-7.5a1 1 0 0 0 0-1.72l-12-7.5A1 1 0 0 0 7 4.5z"/></symbol>
     <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M10 11v6M14 11v6"/></symbol>
     <symbol id="i-rupee" viewBox="0 0 24 24"><path d="M6 3h12M6 8h12"/><path d="M6 13l8.5 8"/><path d="M6 13h3a5 5 0 0 0 0-10"/></symbol>
     <symbol id="i-reunited" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></symbol>
@@ -42,20 +41,28 @@
   <!-- Header -->
   <header class="site-header">
     <div class="header-inner">
-      <a href="#" class="brand" id="brand-link">
+      <a href="index.html" class="brand" id="brand-link">
         <div class="brand-icon">
           <svg class="icon" aria-hidden="true"><use href="#i-brand"/></svg>
         </div>
         <div class="brand-info">
           <h1>Campus Lost & Found</h1>
-          <div class="brand-badge">ADBMS 3NF relational system</div>
+          <div class="brand-badge">Property Recovery Hub</div>
         </div>
       </a>
 
+      <nav class="nav-links">
+        <a href="index.html" class="nav-link active">Dashboard</a>
+        <a href="items.html" class="nav-link">Browse Items</a>
+        <a href="claims.html" class="nav-link admin-only">Claims Review</a>
+        <a href="lockers.html" class="nav-link admin-only">Lockers</a>
+        <a href="audit.html" class="nav-link admin-only">Activity Log</a>
+      </nav>
+
       <div class="header-actions">
-        <div class="system-status-pill" id="system-status-pill" title="Live Database Engine Status">
+        <div class="system-status-pill" id="system-status-pill" title="Live Database Status">
           <span class="status-dot"></span>
-          <span id="db-engine-label">SQLite Engine Active</span>
+          <span id="db-engine-label">Connected</span>
         </div>
 
         <button class="theme-btn" id="theme-toggle-btn" aria-label="Toggle Theme" title="Toggle Light/Dark Theme">
@@ -71,43 +78,27 @@
     </div>
   </header>
 
-  <!-- Main App Container -->
+  <!-- Main Container -->
   <main class="container">
 
-    <!-- Hero / Phase Progress Banner -->
-    <section class="hero-banner">
-      <div class="hero-text">
-        <h2>
-          <span>Campus Recovery Hub</span>
-          <span class="hero-badge">All 4 Phases Complete</span>
-        </h2>
-        <p>
-          High-performance relational lost & found management system engineered with strict 3NF schema, 
-          ACID transaction guarantees, linked data structures, and verified campus recovery lockers.
-        </p>
-      </div>
+    <!-- Clean Welcome Hero Banner (No Academic Phases Clutter) -->
+    <section class="clean-hero">
+      <h2 class="clean-hero-title">Campus Lost & Found Recovery Hub</h2>
+      <p class="clean-hero-sub">
+        Search registered property, file ownership verification claims, or log misplaced belongings found across campus.
+      </p>
 
-      <div class="phase-badges-row">
-        <div class="phase-pill completed" title="Phase 1: Real-world dataset extraction, ER model, 3NF schema & Linear DSA (Linked List, Queue, Stack, RPN)">
-          <svg class="icon icon-xs" aria-hidden="true"><use href="#i-check"/></svg>
-          Phase 1: Data Modeling & DSA
-        </div>
-        <div class="phase-pill completed" title="Phase 2: DDL 7-table creation, DML seeding, data cleaning, NULL handling & aggregate queries">
-          <svg class="icon icon-xs" aria-hidden="true"><use href="#i-check"/></svg>
-          Phase 2: DDL & Aggregates
-        </div>
-        <div class="phase-pill completed" title="Phase 3: Joins, subqueries, database views, EXPLAIN plans & stored functions">
-          <svg class="icon icon-xs" aria-hidden="true"><use href="#i-check"/></svg>
-          Phase 3: Joins, Views & EXPLAIN
-        </div>
-        <div class="phase-pill completed" title="Phase 4: ACID transactions, concurrency isolation, locks & referential integrity audits">
-          <svg class="icon icon-xs" aria-hidden="true"><use href="#i-check"/></svg>
-          Phase 4: ACID Transactions & Audit
-        </div>
-      </div>
+      <!-- Instant Search Input Form -->
+      <form class="clean-hero-search" onsubmit="event.preventDefault(); const q = document.getElementById('home-search-input').value.trim(); window.location.href = 'items.html' + (q ? '?search=' + encodeURIComponent(q) : '');">
+        <input type="text" class="clean-hero-input" id="home-search-input" placeholder="Search by item name, model, color, or building location...">
+        <button type="submit" class="btn btn-primary">
+          <svg class="icon icon-sm" aria-hidden="true"><use href="#i-search"/></svg>
+          Search Items
+        </button>
+      </form>
     </section>
 
-    <!-- KPI Metrics Grid -->
+    <!-- KPI Summary Metrics Grid -->
     <section class="metrics-grid" id="metrics-grid">
       <div class="metric-card">
         <div class="metric-content">
@@ -119,7 +110,7 @@
 
       <div class="metric-card">
         <div class="metric-content">
-          <span class="metric-label"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-locker"/></svg>Active in Custody</span>
+          <span class="metric-label"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-locker"/></svg>In Safe Custody</span>
           <span class="metric-value" id="kpi-in-custody">--</span>
           <span class="metric-sub">Held in Secure Lockers</span>
         </div>
@@ -127,374 +118,79 @@
 
       <div class="metric-card">
         <div class="metric-content">
-          <span class="metric-label"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-queue"/></svg>Pending Claim Queue</span>
+          <span class="metric-label"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-queue"/></svg>Pending Claims</span>
           <span class="metric-value" id="kpi-pending-claims">--</span>
-          <span class="metric-sub">FIFO Verification Order</span>
+          <span class="metric-sub">Awaiting Verification</span>
         </div>
       </div>
 
       <div class="metric-card">
         <div class="metric-content">
-          <span class="metric-label"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-rupee"/></svg>Campus Asset Valuation</span>
-          <span class="metric-value" id="kpi-total-val">₹0</span>
-          <span class="metric-sub">100% Free Campus Service</span>
-        </div>
-      </div>
-
-      <div class="metric-card">
-        <div class="metric-content">
-          <span class="metric-label"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-reunited"/></svg>Owner Reunited</span>
+          <span class="metric-label"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-reunited"/></svg>Owners Reunited</span>
           <span class="metric-value" id="kpi-returned-count">--</span>
           <span class="metric-sub">Verified & Discharged</span>
         </div>
       </div>
     </section>
 
-    <!-- Navigation Tabs -->
-    <nav class="main-nav-tabs" role="tablist">
-      <button class="tab-btn active" data-tab="tab-inventory" role="tab" aria-selected="true" aria-controls="tab-inventory">
-        <svg class="icon" aria-hidden="true"><use href="#i-tag"/></svg>
-        Live Inventory & Directory
-        <span class="tab-badge" id="badge-items-count">0</span>
-      </button>
+    <!-- Recent Items Section Header -->
+    <div class="section-header-row">
+      <h3 class="section-header-title">Recently Reported Belongings</h3>
+      <a href="items.html" class="section-link">
+        Browse All Items Directory &rarr;
+      </a>
+    </div>
 
-      <button class="tab-btn" data-tab="tab-claims" role="tab" aria-selected="false" aria-controls="tab-claims">
-        <svg class="icon" aria-hidden="true"><use href="#i-claim"/></svg>
-        Claim Verification & RPN Evaluator
-        <span class="tab-badge" id="badge-claims-count">0</span>
-      </button>
+    <!-- Recent Items Grid -->
+    <div class="items-cards-grid" id="items-container">
+      <!-- Populated dynamically by app.js with latest items -->
+    </div>
 
-      <button class="tab-btn" data-tab="tab-lockers" role="tab" aria-selected="false" aria-controls="tab-lockers">
-        <svg class="icon" aria-hidden="true"><use href="#i-locker"/></svg>
-        Custody Lockers & Duration
-        <span class="tab-badge" id="badge-lockers-count">0</span>
-      </button>
-
-      <button class="tab-btn" data-tab="tab-audit" role="tab" aria-selected="false" aria-controls="tab-audit">
-        <svg class="icon" aria-hidden="true"><use href="#i-history"/></svg>
-        Audit Trail & LIFO Undo
-        <span class="tab-badge" id="badge-audit-count">0</span>
-      </button>
-
-      <button class="tab-btn" data-tab="tab-lab" role="tab" aria-selected="false" aria-controls="tab-lab">
-        <svg class="icon" aria-hidden="true"><use href="#i-flask"/></svg>
-        Lab Practical Showcase (CLO1 - 3)
-      </button>
-    </nav>
-
-    <!-- ====================================================================
-         TAB 1: LIVE INVENTORY & DIRECTORY
-         ==================================================================== -->
-    <section class="tab-pane active" id="tab-inventory" role="tabpanel">
-      <div class="control-bar">
-        <div class="search-wrapper">
-          <svg class="icon search-icon" aria-hidden="true"><use href="#i-search"/></svg>
-          <input type="text" class="search-input" id="search-inventory" placeholder="Search by title, description, or campus building...">
-        </div>
-
-        <div class="filter-group">
-          <select class="select-filter" id="filter-type">
-            <option value="">All types</option>
-            <option value="FOUND">Found only</option>
-            <option value="LOST">Lost only</option>
-          </select>
-
-          <select class="select-filter" id="filter-status">
-            <option value="">All statuses</option>
-            <option value="IN_CUSTODY">In custody</option>
-            <option value="REPORTED">Reported</option>
-            <option value="CLAIM_PENDING">Claim pending</option>
-            <option value="VERIFIED_RETURNED">Returned to owner</option>
-          </select>
-
-          <select class="select-filter" id="filter-category">
-            <option value="">All categories</option>
-            <option value="Electronics">Electronics</option>
-            <option value="Keys/Wallets">Keys/Wallets</option>
-            <option value="Documents/Cards">Documents/Cards</option>
-            <option value="Clothing/Apparel">Clothing/Apparel</option>
-            <option value="Bags/Backpacks">Bags/Backpacks</option>
-          </select>
-
-          <button class="btn btn-secondary" id="btn-refresh-inventory" title="Reload from database">
-            <svg class="icon icon-sm" aria-hidden="true"><use href="#i-refresh"/></svg>
-            Refresh
-          </button>
-        </div>
-      </div>
-
-      <!-- Item Cards Container -->
-      <div class="items-cards-grid" id="items-container">
-        <!-- Rendered dynamically by JavaScript -->
-      </div>
-    </section>
-
-    <!-- ====================================================================
-         TAB 2: CLAIM VERIFICATION QUEUE & RPN EVALUATOR
-         ==================================================================== -->
-    <section class="tab-pane" id="tab-claims" role="tabpanel">
-      <div class="pipeline-layout">
-        <!-- FIFO Queue List -->
-        <div class="queue-card">
-          <div class="card-title-bar">
-            <h3>
-              <svg class="icon" aria-hidden="true"><use href="#i-queue"/></svg>
-              FIFO Verification Queue
-            </h3>
-            <button class="btn btn-secondary btn-sm" id="btn-new-claim-trigger">
-              <svg class="icon icon-sm" aria-hidden="true"><use href="#i-plus"/></svg>
-              File Claim
-            </button>
-          </div>
-
-          <p class="section-note">
-            Claims arrive in strict FIFO (First-In, First-Out) queuing order using pointer-based LinkedQueue nodes.
-          </p>
-
-          <div class="queue-list" id="queue-items-container">
-            <!-- Dynamically populated -->
-          </div>
-        </div>
-
-        <!-- Dynamic Stack-Based RPN Evaluator & ACID Settlement -->
-        <div class="evaluator-card">
-          <div class="card-title-bar">
-            <h3>
-              <svg class="icon" aria-hidden="true"><use href="#i-gauge"/></svg>
-              Stack-Based Confidence Evaluator
-            </h3>
-            <span class="tag tag-neutral" id="selected-claim-tag">No Claim Selected</span>
-          </div>
-
-          <div class="evaluator-formula-box">
-            <div class="formula-label">Active Infix Verification Formula</div>
-            <div class="formula-code">(desc_match * 0.40) + (serial_match * 0.40) + (photo_match * 0.20)</div>
-            <div class="rpn-postfix-badge">RPN Postfix: <code>desc_match 0.40 * serial_match 0.40 * + photo_match 0.20 * +</code></div>
-          </div>
-
-          <!-- Interactive Sliders -->
-          <div class="slider-group">
-            <div class="slider-label-row">
-              <span>Description Match (Weight: 40%)</span>
-              <span id="val-desc-match">85%</span>
-            </div>
-            <input type="range" class="slider-input" id="slider-desc-match" min="0" max="100" value="85">
-          </div>
-
-          <div class="slider-group">
-            <div class="slider-label-row">
-              <span>Serial / ID Match (Weight: 40%)</span>
-              <span id="val-serial-match">95%</span>
-            </div>
-            <input type="range" class="slider-input" id="slider-serial-match" min="0" max="100" value="95">
-          </div>
-
-          <div class="slider-group">
-            <div class="slider-label-row">
-              <span>Photo / Proof Evidence (Weight: 20%)</span>
-              <span id="val-photo-match">90%</span>
-            </div>
-            <input type="range" class="slider-input" id="slider-photo-match" min="0" max="100" value="90">
-          </div>
-
-          <!-- Score Big Banner -->
-          <div class="score-display-card">
-            <div class="score-label">Calculated confidence score</div>
-            <div class="score-big" id="calculated-score-display">90.00%</div>
-            <div class="threshold-indicator">
-              Approval Threshold: <strong>≥ 75.0%</strong> | System Decision: <span id="decision-text" class="decision">APPROVED</span>
-            </div>
-          </div>
-
-          <!-- ACID Settlement Button Group -->
-          <div class="acid-button-group">
-            <button class="btn btn-emerald btn-grow" id="btn-settle-approve">
-              <svg class="icon" aria-hidden="true"><use href="#i-check"/></svg>
-              Commit ACID Return (Approve)
-            </button>
-            <button class="btn btn-danger" id="btn-settle-reject">
-              <svg class="icon" aria-hidden="true"><use href="#i-x"/></svg>
-              Reject Claim
-            </button>
-          </div>
-          <p class="fine-print">
-            Phase 4 ACID guarantee: atomically updates the claim, transfers item status, releases the locker and records an audit snapshot in one commit.
-          </p>
-        </div>
-      </div>
-    </section>
-
-    <!-- ====================================================================
-         TAB 3: CUSTODY LOCKERS & DURATION ANALYTICS
-         ==================================================================== -->
-    <section class="tab-pane" id="tab-lockers" role="tabpanel">
-      <div class="card-title-bar is-page">
+    <!-- Quick Action Services -->
+    <section class="quick-actions-grid">
+      <div class="quick-action-card">
         <div>
-          <h3>Secure Campus Storage Lockers</h3>
-          <p class="section-note">
-            100% Free Campus Custody Service (Zero-Fee Policy). Days held computed dynamically via <code>fn_custody_duration_days</code>.
-          </p>
+          <div class="quick-action-icon">
+            <svg class="icon" aria-hidden="true"><use href="#i-search"/></svg>
+          </div>
+          <h3 style="margin-top: 14px;">Lost an Item?</h3>
+          <p>Register your lost belongings with distinctive markings so campus security can contact you when matched.</p>
         </div>
+        <button class="btn btn-secondary btn-block" onclick="document.getElementById('item-type-input').value = 'LOST'; openModal(document.getElementById('modal-report-item'));">
+          File Lost Report
+        </button>
       </div>
 
-      <!-- Lockers Grid -->
-      <div class="lockers-grid" id="lockers-container">
-        <!-- Rendered dynamically -->
-      </div>
-
-      <!-- Category Analytics View Table -->
-      <div class="card-title-bar is-spaced">
-        <h3>Category Analytics Summary (Database View: <code>v_category_analytics</code>)</h3>
-      </div>
-      <div class="table-container">
-        <table class="modern-table">
-          <thead>
-            <tr>
-              <th>Category</th>
-              <th>Total Items</th>
-              <th>Found Count</th>
-              <th>Lost Count</th>
-              <th>Total Value (₹)</th>
-            </tr>
-          </thead>
-          <tbody id="category-analytics-tbody">
-            <!-- Dynamically populated -->
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- ====================================================================
-         TAB 4: AUDIT TRAIL & LIFO UNDO STACK
-         ==================================================================== -->
-    <section class="tab-pane" id="tab-audit" role="tabpanel">
-      <div class="audit-layout">
-        <!-- Timeline -->
+      <div class="quick-action-card">
         <div>
-          <div class="card-title-bar">
-            <h3>
-              <svg class="icon" aria-hidden="true"><use href="#i-history"/></svg>
-              Immutable Audit Action Log
-            </h3>
-            <span class="meta-note">Database table: <code>audit_actions</code></span>
+          <div class="quick-action-icon">
+            <svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg>
           </div>
-          <div class="timeline-list" id="audit-timeline-container">
-            <!-- Dynamically populated -->
-          </div>
+          <h3 style="margin-top: 14px;">Found Property?</h3>
+          <p>Handing in a misplaced phone, keys, or cards? Register the item to allocate an official custody locker.</p>
         </div>
-
-        <!-- LIFO Stack Visualizer & Undo Controller -->
-        <div class="stack-visualizer-card">
-          <div class="card-title-bar">
-            <h3>LIFO Undo Stack</h3>
-            <span class="tag tag-neutral" id="stack-count-tag">Depth: 0</span>
-          </div>
-
-          <p class="section-note">
-            Pointer-based Singly Linked Stack preserves multi-level history. Clicking <strong>Undo Last Action</strong> pops top stack node and rolls back system state.
-          </p>
-
-          <button class="btn btn-primary btn-block" id="btn-undo-action">
-            <svg class="icon" aria-hidden="true"><use href="#i-undo"/></svg>
-            Undo Last Action (Pop Stack)
-          </button>
-
-          <div class="note-box">
-            <div class="note-box-title">Stack operations</div>
-            <ul>
-              <li><code>push(AuditAction)</code>: O(1) head insertion</li>
-              <li><code>pop()</code>: O(1) top node extraction</li>
-              <li><code>peek()</code>: O(1) inspection without removal</li>
-            </ul>
-          </div>
-        </div>
+        <button class="btn btn-primary btn-block" onclick="document.getElementById('item-type-input').value = 'FOUND'; openModal(document.getElementById('modal-report-item'));">
+          Register Found Item
+        </button>
       </div>
-    </section>
 
-    <!-- ====================================================================
-         TAB 5: LAB PRACTICAL SHOWCASE (CLO1 - CLO3)
-         ==================================================================== -->
-    <section class="tab-pane" id="tab-lab" role="tabpanel">
-      <div class="card-title-bar is-page">
+      <div class="quick-action-card">
         <div>
-          <h3>ADBMS Practical Lab Demonstration Suites</h3>
-          <p class="section-note">
-            Run live verification suites on the active database engine to inspect execution outputs, constraints, views, and ACID tests.
-          </p>
+          <div class="quick-action-icon">
+            <svg class="icon" aria-hidden="true"><use href="#i-claim"/></svg>
+          </div>
+          <h3 style="margin-top: 14px;">Claim Property</h3>
+          <p>Recognize your belonging in the directory? Submit an ownership verification claim with serial or photo proof.</p>
         </div>
+        <button class="btn btn-secondary btn-block" onclick="openModal(document.getElementById('modal-submit-claim'));">
+          Submit Ownership Claim
+        </button>
       </div>
-
-      <div class="lab-grid">
-        <div class="lab-phase-card">
-          <div>
-            <div class="tag tag-neutral">CLO1 Target</div>
-            <h4 class="lab-card-title">Phase 1: Linear DSA</h4>
-            <p>
-              Validates pure Node Linked List, FIFO queue, LIFO undo stack, and Infix-to-Postfix RPN formula evaluation.
-            </p>
-          </div>
-          <button class="btn btn-secondary btn-sm" id="btn-run-phase1">
-            <svg class="icon icon-xs icon-fill" aria-hidden="true"><use href="#i-play"/></svg>
-            Run Phase 1 Suite
-          </button>
-        </div>
-
-        <div class="lab-phase-card">
-          <div>
-            <div class="tag tag-neutral">CLO2 Target</div>
-            <h4 class="lab-card-title">Phase 2: DDL & DML</h4>
-            <p>
-              Executes 7-table creation, DML seeding with realistic dates, constraint validations, and aggregate summaries.
-            </p>
-          </div>
-          <button class="btn btn-secondary btn-sm" id="btn-run-phase2">
-            <svg class="icon icon-xs icon-fill" aria-hidden="true"><use href="#i-play"/></svg>
-            Run Phase 2 Suite
-          </button>
-        </div>
-
-        <div class="lab-phase-card">
-          <div>
-            <div class="tag tag-neutral">CLO2 & CLO3 Target</div>
-            <h4 class="lab-card-title">Phase 3: Joins & Views</h4>
-            <p>
-              Executes multi-table joins, nested subqueries, database views, EXPLAIN execution plans, and custody functions.
-            </p>
-          </div>
-          <button class="btn btn-secondary btn-sm" id="btn-run-phase3">
-            <svg class="icon icon-xs icon-fill" aria-hidden="true"><use href="#i-play"/></svg>
-            Run Phase 3 Suite
-          </button>
-        </div>
-
-        <div class="lab-phase-card">
-          <div>
-            <div class="tag tag-neutral">CLO3 Target</div>
-            <h4 class="lab-card-title">Phase 4: ACID Transactions</h4>
-            <p>
-              Simulates Commit, Rollback, Savepoints, pessimistic locking analysis, integrity constraint tests, and audit checks.
-            </p>
-          </div>
-          <button class="btn btn-secondary btn-sm" id="btn-run-phase4">
-            <svg class="icon icon-xs icon-fill" aria-hidden="true"><use href="#i-play"/></svg>
-            Run Phase 4 Suite
-          </button>
-        </div>
-      </div>
-
-      <!-- Live Terminal Output Console -->
-      <div class="card-title-bar">
-        <span class="console-label">Live console output</span>
-        <button class="btn btn-secondary btn-sm" id="btn-clear-terminal">Clear Console</button>
-      </div>
-      <pre class="terminal-box" id="terminal-output">Ready. Click any Phase Suite button above to execute practical scripts and view real-time database outputs.</pre>
     </section>
 
   </main>
 
-  <!-- ====================================================================
-       MODAL: REPORT NEW ITEM (LOST OR FOUND)
-       ==================================================================== -->
+  <!-- MODAL: REPORT ITEM -->
   <div class="modal-overlay" id="modal-report-item">
     <div class="modal-content" role="dialog" aria-modal="true" aria-label="Report Campus Property">
       <div class="modal-header">
@@ -560,9 +256,7 @@
     </div>
   </div>
 
-  <!-- ====================================================================
-       MODAL: FILE VERIFICATION CLAIM
-       ==================================================================== -->
+  <!-- MODAL: SUBMIT CLAIM -->
   <div class="modal-overlay" id="modal-submit-claim">
     <div class="modal-content" role="dialog" aria-modal="true" aria-label="Submit Ownership Claim Ticket">
       <div class="modal-header">
@@ -595,16 +289,16 @@
 
         <div class="modal-actions">
           <button type="button" class="btn btn-secondary" data-close="modal-submit-claim">Cancel</button>
-          <button type="submit" class="btn btn-primary" id="btn-enqueue-claim">Enqueue Claim (FIFO)</button>
+          <button type="submit" class="btn btn-primary" id="btn-enqueue-claim">Submit Claim Ticket</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- Toast Notification Container -->
+  <!-- Toast Container -->
   <div class="toast-container" id="toast-container"></div>
 
-  <!-- Main JavaScript Logic -->
+  <!-- Scripts -->
   <script src="app.js"></script>
 </body>
 </html>

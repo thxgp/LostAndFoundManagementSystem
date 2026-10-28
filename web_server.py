@@ -14,7 +14,11 @@ import subprocess
 import mimetypes
 from datetime import datetime
 from http.server import HTTPServer, SimpleHTTPRequestHandler
+from socketserver import ThreadingMixIn
 from urllib.parse import urlparse, parse_qs
+
+class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
+    daemon_threads = True
 
 # Configure standard streams for UTF-8 on Windows
 if sys.platform == "win32":
@@ -97,6 +101,9 @@ class LFMSRequestHandler(SimpleHTTPRequestHandler):
                 self._handle_get_status()
             elif path == "/api/items":
                 self._handle_get_items(query_params)
+            elif path.startswith("/api/items/"):
+                item_id = int(path.split("/")[3])
+                self._handle_get_item_by_id(item_id)
             elif path == "/api/claims":
                 self._handle_get_claims(query_params)
             elif path == "/api/lockers":
@@ -254,6 +261,64 @@ class LFMSRequestHandler(SimpleHTTPRequestHandler):
 
         conn.close()
         self._send_json({"items": items, "count": len(items)})
+
+    def _handle_get_item_by_id(self, item_id):
+        conn = self._get_sqlite_conn()
+        cur = conn.cursor()
+
+        sql = """
+            SELECT 
+                i.item_id, i.title, i.category, i.description, i.item_type,
+                i.location, i.status, i.reporter_name, i.reporter_contact,
+                i.reward_or_value, i.reported_date, i.updated_at,
+                sl.locker_code, sl.custody_start_date, sl.release_date, sl.remarks as locker_remarks
+            FROM items i
+            LEFT JOIN storage_lockers sl ON i.item_id = sl.item_id
+            WHERE i.item_id = ?
+        """
+        cur.execute(sql, (item_id,))
+        row = cur.fetchone()
+        if not row:
+            conn.close()
+            self._send_json({"error": f"Item #{item_id} not found"}, 404)
+            return
+
+        cur.execute("""
+            SELECT claim_id, claimant_name, claimant_contact, proof_description,
+                   confidence_score, claim_status, submitted_at
+            FROM claims WHERE item_id = ? ORDER BY claim_id DESC
+        """, (item_id,))
+        claims = [dict(c) for c in cur.fetchall()]
+
+        cur.execute("""
+            SELECT action_id, action_type, snapshot_before, snapshot_after, performed_at
+            FROM audit_actions WHERE item_id = ? ORDER BY action_id DESC
+        """, (item_id,))
+        audit = [dict(a) for a in cur.fetchall()]
+
+        conn.close()
+
+        item_data = {
+            "item_id": row["item_id"],
+            "title": row["title"],
+            "category": row["category"],
+            "description": row["description"],
+            "item_type": row["item_type"],
+            "location": row["location"],
+            "status": row["status"],
+            "reporter_name": row["reporter_name"],
+            "reporter_contact": row["reporter_contact"],
+            "reward_or_value": float(row["reward_or_value"]),
+            "reported_date": str(row["reported_date"]),
+            "updated_at": str(row["updated_at"]),
+            "locker_code": row["locker_code"],
+            "custody_start_date": str(row["custody_start_date"]) if row["custody_start_date"] else None,
+            "release_date": str(row["release_date"]) if row["release_date"] else None,
+            "locker_remarks": row["locker_remarks"],
+            "claims": claims,
+            "audit_history": audit
+        }
+        self._send_json({"item": item_data})
 
     def _handle_get_claims(self, query_params):
         status_filter = query_params.get("status", [""])[0].strip().upper()
@@ -661,7 +726,7 @@ class LFMSRequestHandler(SimpleHTTPRequestHandler):
 
 def start_server():
     server_address = ("", PORT)
-    httpd = HTTPServer(server_address, LFMSRequestHandler)
+    httpd = ThreadedHTTPServer(server_address, LFMSRequestHandler)
     print("\n=======================================================")
     print("  [+] LOST AND FOUND SYSTEM - WEB SERVER ACTIVE")
     print(f"  Local URL: http://localhost:{PORT}")

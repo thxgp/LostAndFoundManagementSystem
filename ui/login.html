@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal Access | Campus Lost & Found</title>
+  <meta name="description" content="Select user role to access student recovery directory or staff verification administration.">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Overpass:wght@400;600;700;800&family=Overpass+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23F2C230'/%3E%3Cg transform='translate(4 4)' fill='none' stroke='%231B2430' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 12.6V4.5A1.5 1.5 0 0 1 4.5 3h8.1a1.5 1.5 0 0 1 1.06.44l6.9 6.9a1.5 1.5 0 0 1 0 2.12l-8.1 8.1a1.5 1.5 0 0 1-2.12 0l-6.9-6.9A1.5 1.5 0 0 1 3 12.6z'/%3E%3Ccircle cx='7.5' cy='7.5' r='1.2' fill='%231B2430'/%3E%3Cpath d='M9.5 13l2.2 2.2 4-4'/%3E%3C/g%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Icon set sprite -->
+  <svg xmlns="http://www.w3.org/2000/svg" class="icon-sprite" aria-hidden="true">
+    <symbol id="i-brand" viewBox="0 0 24 24"><path d="M3 12.6V4.5A1.5 1.5 0 0 1 4.5 3h8.1a1.5 1.5 0 0 1 1.06.44l6.9 6.9a1.5 1.5 0 0 1 0 2.12l-8.1 8.1a1.5 1.5 0 0 1-2.12 0l-6.9-6.9A1.5 1.5 0 0 1 3 12.6z"/><circle cx="7.5" cy="7.5" r="1.2" fill="currentColor"/><path d="M9.5 13l2.2 2.2 4-4"/></symbol>
+    <symbol id="i-tag" viewBox="0 0 24 24"><path d="M3 12.6V4.5A1.5 1.5 0 0 1 4.5 3h8.1a1.5 1.5 0 0 1 1.06.44l6.9 6.9a1.5 1.5 0 0 1 0 2.12l-8.1 8.1a1.5 1.5 0 0 1-2.12 0l-6.9-6.9A1.5 1.5 0 0 1 3 12.6z"/><circle cx="7.5" cy="7.5" r="1.2" fill="currentColor"/></symbol>
+    <symbol id="i-claim" viewBox="0 0 24 24"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 14l2 2 4-4"/></symbol>
+    <symbol id="i-locker" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M12 2v20"/><path d="M9.5 11v2.5M14.5 11v2.5"/><path d="M7 5.5h2.5M14.5 5.5H17M7 8h2.5M14.5 8H17"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></symbol>
+  </svg>
+
+  <!-- Header -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="index.html" class="brand" id="brand-link">
+        <div class="brand-icon">
+          <svg class="icon" aria-hidden="true"><use href="#i-brand"/></svg>
+        </div>
+        <div class="brand-info">
+          <h1>Campus Lost & Found</h1>
+          <div class="brand-badge">Property Recovery Hub</div>
+        </div>
+      </a>
+
+      <div class="header-actions">
+        <button class="theme-btn" id="theme-toggle-btn" aria-label="Toggle Theme" title="Toggle Light/Dark Theme">
+          <svg class="icon icon-sun" aria-hidden="true"><use href="#i-sun"/></svg>
+          <svg class="icon icon-moon" aria-hidden="true"><use href="#i-moon"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Login Container -->
+  <main class="login-container">
+    <div class="login-hero">
+      <h2>Select Your Campus Portal</h2>
+      <p>Users and verification officers have separate role-based access to the lost property system.</p>
+    </div>
+
+    <div class="login-cards-grid">
+      <!-- User / Student Card -->
+      <div class="login-card user-card">
+        <div>
+          <div class="login-card-icon">
+            <svg class="icon" aria-hidden="true"><use href="#i-tag"/></svg>
+          </div>
+          <h3 class="login-card-title">Student &amp; Campus Member</h3>
+          <p class="login-card-desc">
+            Search cataloged items, submit lost property inquiries, or register items found across campus buildings.
+          </p>
+          <ul class="login-card-features">
+            <li>Search and browse all lost &amp; found property</li>
+            <li>Report a lost item with distinctive markings</li>
+            <li>Register found belongings into campus custody</li>
+            <li>File an ownership claim ticket with proof</li>
+          </ul>
+        </div>
+        <button class="btn btn-primary btn-block" onclick="loginAs('user')">
+          Enter as Student / Campus User &rarr;
+        </button>
+      </div>
+
+      <!-- Officer / Admin Card -->
+      <div class="login-card admin-card">
+        <div>
+          <div class="login-card-icon">
+            <svg class="icon" aria-hidden="true"><use href="#i-locker"/></svg>
+          </div>
+          <h3 class="login-card-title">Property Custody Officer (Admin)</h3>
+          <p class="login-card-desc">
+            Authorized administration desk for verifying ownership claims, managing storage lockers, and audit logging.
+          </p>
+          <ul class="login-card-features">
+            <li>Verify and resolve ownership claim tickets</li>
+            <li>Match confidence score calculation &amp; criteria</li>
+            <li>Property return approval and discharge</li>
+            <li>Campus custody locker allocation and management</li>
+            <li>Action history timeline and state rollback</li>
+          </ul>
+        </div>
+        <button class="btn btn-emerald btn-block" onclick="loginAs('admin')">
+          Enter as Staff Officer (Admin) &rarr;
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <script src="app.js"></script>
+  <script>
+    function loginAs(role) {
+      localStorage.setItem("lfms-user-role", role);
+      if (role === "admin") {
+        localStorage.setItem("lfms-user-name", "Security Officer");
+        showToast("Signed in as Campus Custody Officer (Admin)", "success");
+        setTimeout(() => window.location.href = "claims.html", 400);
+      } else {
+        localStorage.setItem("lfms-user-name", "Student User");
+        showToast("Signed in as Student / Campus User", "success");
+        setTimeout(() => window.location.href = "items.html", 400);
+      }
+    }
+  </script>
+</body>
+</html>

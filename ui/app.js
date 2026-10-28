@@ -1,8 +1,8 @@
 /**
  * ==============================================================================
  * CAMPUS LOST AND FOUND MANAGEMENT SYSTEM (LFMS) — FRONTEND CONTROLLER
- * Zero-dependency modern Vanilla JavaScript application.
- * Full integration with REST API and instant fallback to offline simulation.
+ * Clean, modern Vanilla JavaScript application with Role-Based Access Control.
+ * Supports Student / Campus User portal and Property Officer (Admin) portal.
  * ==============================================================================
  */
 
@@ -15,6 +15,7 @@ const state = {
   analytics: null,
   selectedClaim: null,
   isLiveApi: false,
+  userRole: localStorage.getItem("lfms-user-role") || "user", // "user" or "admin"
   metrics: {
     total_items: 0,
     in_custody: 0,
@@ -150,69 +151,119 @@ const OFFLINE_SEED_CLAIMS = [
 ];
 
 // Document Elements
-const el = {
-  dbEngineLabel: document.getElementById("db-engine-label"),
-  themeToggleBtn: document.getElementById("theme-toggle-btn"),
-  metricsGrid: document.getElementById("metrics-grid"),
-  kpiTotalItems: document.getElementById("kpi-total-items"),
-  kpiInCustody: document.getElementById("kpi-in-custody"),
-  kpiPendingClaims: document.getElementById("kpi-pending-claims"),
-  kpiTotalVal: document.getElementById("kpi-total-val"),
-  kpiReturnedCount: document.getElementById("kpi-returned-count"),
-  badgeItemsCount: document.getElementById("badge-items-count"),
-  badgeClaimsCount: document.getElementById("badge-claims-count"),
-  badgeLockersCount: document.getElementById("badge-lockers-count"),
-  badgeAuditCount: document.getElementById("badge-audit-count"),
-  itemsContainer: document.getElementById("items-container"),
-  searchInventory: document.getElementById("search-inventory"),
-  filterType: document.getElementById("filter-type"),
-  filterStatus: document.getElementById("filter-status"),
-  filterCategory: document.getElementById("filter-category"),
-  btnRefreshInventory: document.getElementById("btn-refresh-inventory"),
-  queueItemsContainer: document.getElementById("queue-items-container"),
-  selectedClaimTag: document.getElementById("selected-claim-tag"),
-  sliderDescMatch: document.getElementById("slider-desc-match"),
-  sliderSerialMatch: document.getElementById("slider-serial-match"),
-  sliderPhotoMatch: document.getElementById("slider-photo-match"),
-  valDescMatch: document.getElementById("val-desc-match"),
-  valSerialMatch: document.getElementById("val-serial-match"),
-  valPhotoMatch: document.getElementById("val-photo-match"),
-  calculatedScoreDisplay: document.getElementById("calculated-score-display"),
-  decisionText: document.getElementById("decision-text"),
-  btnSettleApprove: document.getElementById("btn-settle-approve"),
-  btnSettleReject: document.getElementById("btn-settle-reject"),
-  lockersContainer: document.getElementById("lockers-container"),
-  categoryAnalyticsTbody: document.getElementById("category-analytics-tbody"),
-  auditTimelineContainer: document.getElementById("audit-timeline-container"),
-  stackCountTag: document.getElementById("stack-count-tag"),
-  btnUndoAction: document.getElementById("btn-undo-action"),
-  terminalOutput: document.getElementById("terminal-output"),
-  btnClearTerminal: document.getElementById("btn-clear-terminal"),
-  btnReportItem: document.getElementById("btn-report-item"),
-  btnNewClaimTrigger: document.getElementById("btn-new-claim-trigger"),
-  modalReportItem: document.getElementById("modal-report-item"),
-  modalSubmitClaim: document.getElementById("modal-submit-claim"),
-  formReportItem: document.getElementById("form-report-item"),
-  formSubmitClaim: document.getElementById("form-submit-claim"),
-  claimItemSelect: document.getElementById("claim-item-select"),
-  toastContainer: document.getElementById("toast-container")
-};
+let el = {};
+
+function initElements() {
+  el = {
+    dbEngineLabel: document.getElementById("db-engine-label"),
+    themeToggleBtn: document.getElementById("theme-toggle-btn"),
+    metricsGrid: document.getElementById("metrics-grid"),
+    kpiTotalItems: document.getElementById("kpi-total-items"),
+    kpiInCustody: document.getElementById("kpi-in-custody"),
+    kpiPendingClaims: document.getElementById("kpi-pending-claims"),
+    kpiReturnedCount: document.getElementById("kpi-returned-count"),
+    badgeItemsCount: document.getElementById("badge-items-count"),
+    badgeClaimsCount: document.getElementById("badge-claims-count"),
+    badgeLockersCount: document.getElementById("badge-lockers-count"),
+    badgeAuditCount: document.getElementById("badge-audit-count"),
+    itemsContainer: document.getElementById("items-container"),
+    itemDetailContainer: document.getElementById("item-detail-container"),
+    searchInventory: document.getElementById("search-inventory"),
+    filterType: document.getElementById("filter-type"),
+    filterStatus: document.getElementById("filter-status"),
+    filterCategory: document.getElementById("filter-category"),
+    btnRefreshInventory: document.getElementById("btn-refresh-inventory"),
+    queueItemsContainer: document.getElementById("queue-items-container"),
+    selectedClaimTag: document.getElementById("selected-claim-tag"),
+    sliderDescMatch: document.getElementById("slider-desc-match"),
+    sliderSerialMatch: document.getElementById("slider-serial-match"),
+    sliderPhotoMatch: document.getElementById("slider-photo-match"),
+    valDescMatch: document.getElementById("val-desc-match"),
+    valSerialMatch: document.getElementById("val-serial-match"),
+    valPhotoMatch: document.getElementById("val-photo-match"),
+    calculatedScoreDisplay: document.getElementById("calculated-score-display"),
+    decisionText: document.getElementById("decision-text"),
+    btnSettleApprove: document.getElementById("btn-settle-approve"),
+    btnSettleReject: document.getElementById("btn-settle-reject"),
+    lockersContainer: document.getElementById("lockers-container"),
+    categoryAnalyticsTbody: document.getElementById("category-analytics-tbody"),
+    auditTimelineContainer: document.getElementById("audit-timeline-container"),
+    stackCountTag: document.getElementById("stack-count-tag"),
+    btnUndoAction: document.getElementById("btn-undo-action"),
+    btnReportItem: document.getElementById("btn-report-item"),
+    btnNewClaimTrigger: document.getElementById("btn-new-claim-trigger"),
+    modalReportItem: document.getElementById("modal-report-item"),
+    modalSubmitClaim: document.getElementById("modal-submit-claim"),
+    formReportItem: document.getElementById("form-report-item"),
+    formSubmitClaim: document.getElementById("form-submit-claim"),
+    claimItemSelect: document.getElementById("claim-item-select"),
+    toastContainer: document.getElementById("toast-container") || document.body
+  };
+}
 
 // ==============================================================================
 // INITIALIZATION & EVENT LISTENERS
 // ==============================================================================
 
 document.addEventListener("DOMContentLoaded", () => {
+  initElements();
   initTheme();
-  setupTabs();
+  initAuth();
   setupModals();
   setupEvaluatorSliders();
   setupSearchAndFilters();
-  setupDemoButtons();
+  setupItemDetail();
 
   // Load initial data
   loadAllData();
 });
+
+// Role-Based Auth Handling
+function initAuth() {
+  const role = state.userRole;
+  if (role === "admin") {
+    document.body.classList.add("is-admin");
+  } else {
+    document.body.classList.remove("is-admin");
+  }
+
+  // Inject or update user role switcher in header
+  const headerActions = document.querySelector(".header-actions");
+  if (headerActions && !document.getElementById("auth-role-link")) {
+    const roleLink = document.createElement("a");
+    roleLink.id = "auth-role-link";
+    roleLink.href = "login.html";
+    roleLink.className = "user-role-pill";
+    roleLink.title = "Click to switch role or portal";
+    roleLink.innerHTML = role === "admin"
+      ? `<span class="role-badge-tag role-admin">Admin Desk</span> <span>Officer</span>`
+      : `<span class="role-badge-tag role-user">Student Portal</span> <span>Switch Role</span>`;
+    headerActions.insertBefore(roleLink, headerActions.firstChild);
+  }
+
+  // Gatekeeping on admin pages
+  const path = window.location.pathname;
+  const isAdminPage = path.endsWith("claims.html") || path.endsWith("lockers.html") || path.endsWith("audit.html");
+  if (isAdminPage && role !== "admin") {
+    const main = document.querySelector("main.container");
+    if (main) {
+      main.innerHTML = `
+        <div class="restricted-banner">
+          <div style="font-size: 2.2rem; margin-bottom: 12px;">🛡️</div>
+          <h3>Property Custody Officer Portal Required</h3>
+          <p>
+            Claim verification, match confidence evaluation, locker allocations, and audit history operations 
+            are strictly restricted to authorized campus staff officers.
+          </p>
+          <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+            <a href="login.html" class="btn btn-primary">Sign in as Custody Officer</a>
+            <a href="items.html" class="btn btn-secondary">Browse Public Directory</a>
+          </div>
+        </div>
+      `;
+    }
+  }
+}
 
 // Theme handling
 function initTheme() {
@@ -221,41 +272,21 @@ function initTheme() {
     document.body.classList.add("light-theme");
   }
 
-  el.themeToggleBtn.addEventListener("click", () => {
-    document.body.classList.toggle("light-theme");
-    const isLight = document.body.classList.contains("light-theme");
-    localStorage.setItem("lfms-theme", isLight ? "light" : "dark");
-    showToast(`Switched to ${isLight ? "Light" : "Dark"} theme`, "info");
-  });
-}
-
-// Tab navigation
-function setupTabs() {
-  const tabBtns = document.querySelectorAll(".tab-btn");
-  const tabPanes = document.querySelectorAll(".tab-pane");
-
-  tabBtns.forEach(btn => {
-    btn.addEventListener("click", () => {
-      const targetTab = btn.getAttribute("data-tab");
-
-      tabBtns.forEach(b => {
-        b.classList.remove("active");
-        b.setAttribute("aria-selected", "false");
-      });
-      tabPanes.forEach(p => p.classList.remove("active"));
-
-      btn.classList.add("active");
-      btn.setAttribute("aria-selected", "true");
-      const activePane = document.getElementById(targetTab);
-      if (activePane) activePane.classList.add("active");
+  if (el.themeToggleBtn) {
+    el.themeToggleBtn.addEventListener("click", () => {
+      document.body.classList.toggle("light-theme");
+      const isLight = document.body.classList.contains("light-theme");
+      localStorage.setItem("lfms-theme", isLight ? "light" : "dark");
+      showToast(`Switched to ${isLight ? "Light" : "Dark"} theme`, "info");
     });
-  });
+  }
 }
 
 // Modal handling
 let modalReturnFocus = null;
 
 function openModal(modal) {
+  if (!modal) return;
   modalReturnFocus = document.activeElement;
   modal.classList.add("open");
   const firstField = modal.querySelector("input, select, textarea");
@@ -263,24 +294,24 @@ function openModal(modal) {
 }
 
 function closeModal(modal) {
+  if (!modal) return;
   modal.classList.remove("open");
   if (modalReturnFocus && document.contains(modalReturnFocus)) modalReturnFocus.focus();
   modalReturnFocus = null;
 }
 
 function setupModals() {
-  // Open Report Modal
-  el.btnReportItem.addEventListener("click", () => {
-    openModal(el.modalReportItem);
-  });
+  if (el.btnReportItem && el.modalReportItem) {
+    el.btnReportItem.addEventListener("click", () => openModal(el.modalReportItem));
+  }
 
-  // Open Claim Modal
-  el.btnNewClaimTrigger.addEventListener("click", () => {
-    populateClaimSelectDropdown();
-    openModal(el.modalSubmitClaim);
-  });
+  if (el.btnNewClaimTrigger && el.modalSubmitClaim) {
+    el.btnNewClaimTrigger.addEventListener("click", () => {
+      populateClaimSelectDropdown();
+      openModal(el.modalSubmitClaim);
+    });
+  }
 
-  // Close buttons
   document.querySelectorAll("[data-close]").forEach(btn => {
     btn.addEventListener("click", () => {
       const modalId = btn.getAttribute("data-close");
@@ -289,7 +320,6 @@ function setupModals() {
     });
   });
 
-  // Esc closes the open modal; Tab stays inside it
   document.addEventListener("keydown", (e) => {
     const modal = document.querySelector(".modal-overlay.open");
     if (!modal) return;
@@ -312,55 +342,283 @@ function setupModals() {
     }
   });
 
-  // Form Submissions
-  el.formReportItem.addEventListener("submit", handleReportItemSubmit);
-  el.formSubmitClaim.addEventListener("submit", handleSubmitClaimSubmit);
-  el.btnRefreshInventory.addEventListener("click", () => {
-    loadAllData();
-    showToast("Inventory refreshed from database", "info");
-  });
-  el.btnUndoAction.addEventListener("click", handleUndoAction);
+  if (el.formReportItem) el.formReportItem.addEventListener("submit", handleReportItemSubmit);
+  if (el.formSubmitClaim) el.formSubmitClaim.addEventListener("submit", handleSubmitClaimSubmit);
+  if (el.btnUndoAction) el.btnUndoAction.addEventListener("click", handleUndoAction);
 }
 
 // Evaluator Sliders
 function setupEvaluatorSliders() {
+  if (!el.sliderDescMatch) return;
+
   const updateEvaluator = () => {
     rpnVariables.desc_match = parseFloat(el.sliderDescMatch.value);
     rpnVariables.serial_match = parseFloat(el.sliderSerialMatch.value);
     rpnVariables.photo_match = parseFloat(el.sliderPhotoMatch.value);
 
-    el.valDescMatch.textContent = `${rpnVariables.desc_match}%`;
-    el.valSerialMatch.textContent = `${rpnVariables.serial_match}%`;
-    el.valPhotoMatch.textContent = `${rpnVariables.photo_match}%`;
+    if (el.valDescMatch) el.valDescMatch.textContent = `${rpnVariables.desc_match}%`;
+    if (el.valSerialMatch) el.valSerialMatch.textContent = `${rpnVariables.serial_match}%`;
+    if (el.valPhotoMatch) el.valPhotoMatch.textContent = `${rpnVariables.photo_match}%`;
 
-    // Dynamic Stack Evaluation Formula: (desc * 0.4) + (serial * 0.4) + (photo * 0.2)
     const score = (rpnVariables.desc_match * 0.4) + (rpnVariables.serial_match * 0.4) + (rpnVariables.photo_match * 0.2);
-    el.calculatedScoreDisplay.textContent = `${score.toFixed(2)}%`;
+    if (el.calculatedScoreDisplay) el.calculatedScoreDisplay.textContent = `${score.toFixed(2)}%`;
 
     const passed = score >= 75.0;
-    el.calculatedScoreDisplay.classList.toggle("is-fail", !passed);
-    el.decisionText.classList.toggle("is-fail", !passed);
-    el.decisionText.textContent = passed ? "APPROVED" : "REJECTED";
-    if (passed) el.btnSettleApprove.disabled = false;
+    if (el.calculatedScoreDisplay) el.calculatedScoreDisplay.classList.toggle("is-fail", !passed);
+    if (el.decisionText) {
+      el.decisionText.classList.toggle("is-fail", !passed);
+      el.decisionText.textContent = passed ? "APPROVED" : "REJECTED";
+    }
+    if (el.btnSettleApprove) el.btnSettleApprove.disabled = !passed;
   };
 
   el.sliderDescMatch.addEventListener("input", updateEvaluator);
   el.sliderSerialMatch.addEventListener("input", updateEvaluator);
   el.sliderPhotoMatch.addEventListener("input", updateEvaluator);
 
-  el.btnSettleApprove.addEventListener("click", () => handleSettleClaim("APPROVED"));
-  el.btnSettleReject.addEventListener("click", () => handleSettleClaim("REJECTED"));
+  if (el.btnSettleApprove) el.btnSettleApprove.addEventListener("click", () => handleSettleClaim("APPROVED"));
+  if (el.btnSettleReject) el.btnSettleReject.addEventListener("click", () => handleSettleClaim("REJECTED"));
 
   updateEvaluator();
 }
 
 // Search & Filter listeners
 function setupSearchAndFilters() {
+  if (!el.searchInventory) return;
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const searchParam = urlParams.get("search");
+  if (searchParam) el.searchInventory.value = searchParam;
+
   const filterHandler = () => renderInventoryCards();
   el.searchInventory.addEventListener("input", filterHandler);
-  el.filterType.addEventListener("change", filterHandler);
-  el.filterStatus.addEventListener("change", filterHandler);
-  el.filterCategory.addEventListener("change", filterHandler);
+  if (el.filterType) el.filterType.addEventListener("change", filterHandler);
+  if (el.filterStatus) el.filterStatus.addEventListener("change", filterHandler);
+  if (el.filterCategory) el.filterCategory.addEventListener("change", filterHandler);
+  if (el.btnRefreshInventory) {
+    el.btnRefreshInventory.addEventListener("click", () => {
+      loadAllData();
+      showToast("Directory refreshed from database", "info");
+    });
+  }
+}
+
+// Dedicated Item Detail Page Setup
+async function setupItemDetail() {
+  const container = document.getElementById("item-detail-container");
+  if (!container) return;
+
+  const params = new URLSearchParams(window.location.search);
+  const itemId = params.get("id");
+  if (!itemId) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <h4>No Item Specified</h4>
+        <p>Please select an item from the <a href="items.html" style="color: var(--accent-text);">Property Directory</a>.</p>
+      </div>
+    `;
+    return;
+  }
+
+  try {
+    const res = await fetch(`/api/items/${itemId}`);
+    if (!res.ok) throw new Error(`Item #${itemId} not found`);
+    const data = await res.json();
+    renderItemDetailPage(data.item);
+  } catch (err) {
+    const item = state.items.find(i => String(i.item_id) === String(itemId)) || OFFLINE_SEED_ITEMS.find(i => String(i.item_id) === String(itemId));
+    if (item) {
+      renderItemDetailPage(item);
+    } else {
+      container.innerHTML = `
+        <div class="empty-state">
+          <h4>Item #${escapeHtml(itemId)} Not Found</h4>
+          <p>The requested property record could not be found or has been purged.</p>
+          <a href="items.html" class="btn btn-secondary btn-sm" style="margin-top: 14px; display: inline-block;">Return to Directory</a>
+        </div>
+      `;
+    }
+  }
+}
+
+function renderItemDetailPage(item) {
+  const container = document.getElementById("item-detail-container");
+  if (!container) return;
+
+  const isFound = item.item_type === "FOUND";
+  const status = statusDisplay(item.status);
+  const isHeld = Boolean(item.locker_code) && item.status !== "VERIFIED_RETURNED";
+  const valFormatted = `₹${(parseFloat(item.reward_or_value) || 0).toLocaleString('en-IN')}`;
+  const claims = item.claims || [];
+  const isAdmin = state.userRole === "admin";
+
+  container.innerHTML = `
+    <div class="item-detail-hero">
+      <div class="item-detail-hero-left">
+        <div class="item-detail-badges">
+          <span class="tag ${isFound ? 'tag-found' : 'tag-lost'}">${isFound ? 'Found Property' : 'Lost Property'}</span>
+          <span class="tag ${status.cls}">${escapeHtml(status.label)}</span>
+          <span class="tag tag-neutral">${escapeHtml(item.category)}</span>
+          <span class="item-id-pill">Record #${item.item_id}</span>
+        </div>
+        <h1 class="item-detail-title">${escapeHtml(item.title)}</h1>
+        <div class="item-detail-meta">
+          <span>Reported: ${escapeHtml(item.reported_date || 'N/A')}</span>
+          ${item.updated_at ? `<span>&bull; Last Activity: ${escapeHtml(item.updated_at)}</span>` : ''}
+        </div>
+      </div>
+
+      <div class="item-detail-actions">
+        ${isFound && item.status !== 'VERIFIED_RETURNED' ? `
+          <button class="btn btn-primary" onclick="initiateClaimForItem(${item.item_id})">
+            <svg class="icon icon-sm" aria-hidden="true"><use href="#i-claim"/></svg>
+            File Claim Ticket
+          </button>
+        ` : ''}
+
+        ${isAdmin ? `
+          <button class="btn btn-secondary" onclick="cycleStatus(${item.item_id})">
+            Advance Status
+          </button>
+          <button class="btn btn-danger" onclick="deleteItemRecord(${item.item_id})" title="Delete record" aria-label="Delete">
+            <svg class="icon icon-sm" aria-hidden="true"><use href="#i-trash"/></svg>
+            Delete
+          </button>
+        ` : ''}
+      </div>
+    </div>
+
+    <div class="item-detail-grid">
+      <!-- Left Column: Specs & Description -->
+      <div>
+        <div class="detail-card">
+          <h3 class="detail-card-title">
+            <svg class="icon icon-sm" aria-hidden="true"><use href="#i-tag"/></svg>
+            Property Description & Specifications
+          </h3>
+          <div class="detail-kv-grid">
+            <div class="detail-kv-item">
+              <span class="detail-kv-label">Category</span>
+              <span class="detail-kv-val">${escapeHtml(item.category)}</span>
+            </div>
+            <div class="detail-kv-item">
+              <span class="detail-kv-label">Location ${isFound ? 'Found' : 'Lost'}</span>
+              <span class="detail-kv-val">${escapeHtml(item.location)}</span>
+            </div>
+            <div class="detail-kv-item">
+              <span class="detail-kv-label">Declared Valuation</span>
+              <span class="detail-kv-val is-money">${valFormatted}</span>
+            </div>
+            <div class="detail-kv-item">
+              <span class="detail-kv-label">Current Status</span>
+              <span class="detail-kv-val">${escapeHtml(status.label)}</span>
+            </div>
+          </div>
+
+          <div style="margin-top: 20px;">
+            <span class="detail-kv-label">Distinct Characteristics & Notes</span>
+            <div class="detail-desc-box">${escapeHtml(item.description)}</div>
+          </div>
+        </div>
+
+        <div class="detail-card">
+          <h3 class="detail-card-title">
+            <svg class="icon icon-sm" aria-hidden="true"><use href="#i-brand"/></svg>
+            Reporter Information
+          </h3>
+          <div class="detail-kv-grid">
+            <div class="detail-kv-item">
+              <span class="detail-kv-label">Reported By</span>
+              <span class="detail-kv-val">${escapeHtml(item.reporter_name)}</span>
+            </div>
+            <div class="detail-kv-item">
+              <span class="detail-kv-label">Campus Contact</span>
+              <span class="detail-kv-val">${escapeHtml(item.reporter_contact)}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Custody & Claims -->
+      <div>
+        <div class="detail-card">
+          <h3 class="detail-card-title">
+            <svg class="icon icon-sm" aria-hidden="true"><use href="#i-locker"/></svg>
+            Campus Storage & Custody
+          </h3>
+          ${item.locker_code ? `
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+              <span class="locker-plate ${isHeld ? '' : 'is-released'}">${escapeHtml(lockerNumber(item.locker_code))}</span>
+              <span class="tag ${isHeld ? 'tag-custody' : 'tag-returned'}">
+                ${isHeld ? 'In Secure Custody' : 'Discharged'}
+              </span>
+            </div>
+            <div class="detail-kv-grid">
+              <div class="detail-kv-item">
+                <span class="detail-kv-label">Custody Start</span>
+                <span class="detail-kv-val">${escapeHtml(item.custody_start_date || 'N/A')}</span>
+              </div>
+              <div class="detail-kv-item">
+                <span class="detail-kv-label">Discharge Date</span>
+                <span class="detail-kv-val">${escapeHtml(item.release_date || 'Currently Active')}</span>
+              </div>
+            </div>
+            <p style="font-size: var(--fs-xs); color: var(--text-2); margin-top: 14px; background: var(--bg); padding: 12px; border-radius: var(--r-control); line-height: 1.5;">
+              ${escapeHtml(item.locker_remarks || 'Stored safely at Campus Lost Property Custody Office. Zero fee campus service.')}
+            </p>
+          ` : `
+            <p style="color: var(--text-2); font-size: var(--fs-sm);">
+              ${isFound ? 'No custody locker allocated.' : 'No storage assigned (Lost property search report).'}
+            </p>
+          `}
+        </div>
+
+        <div class="detail-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+            <h3 class="detail-card-title" style="margin-bottom: 0; border-bottom: none; padding-bottom: 0;">
+              <svg class="icon icon-sm" aria-hidden="true"><use href="#i-claim"/></svg>
+              Ownership Claims (${claims.length})
+            </h3>
+            ${isFound && item.status !== 'VERIFIED_RETURNED' ? `
+              <button class="btn btn-secondary btn-sm" onclick="initiateClaimForItem(${item.item_id})">
+                + File Claim
+              </button>
+            ` : ''}
+          </div>
+
+          ${claims.length > 0 ? `
+            <div class="detail-claims-list">
+              ${claims.map(c => `
+                <div class="detail-claim-ticket">
+                  <div class="detail-claim-header">
+                    <strong>Claim #${c.claim_id}: ${escapeHtml(c.claimant_name)}</strong>
+                    <span class="tag ${c.claim_status === 'APPROVED' ? 'tag-found' : c.claim_status === 'REJECTED' ? 'tag-lost' : 'tag-pending'}">
+                      ${escapeHtml(c.claim_status)}
+                    </span>
+                  </div>
+                  <div style="font-size: var(--fs-xs); color: var(--text-2);">
+                    Contact: ${escapeHtml(c.claimant_contact)} | Score: ${c.confidence_score}%
+                  </div>
+                  <p style="font-size: var(--fs-xs); color: var(--text-3); font-style: italic; margin-top: 4px;">
+                    "${escapeHtml(c.proof_description)}"
+                  </p>
+                </div>
+              `).join('')}
+            </div>
+          ` : `
+            <p style="color: var(--text-2); font-size: var(--fs-sm);">
+              No claims submitted for this item yet.
+            </p>
+            ${isFound && item.status !== 'VERIFIED_RETURNED' ? `
+              <button class="btn btn-primary btn-sm btn-block" style="margin-top: 14px;" onclick="initiateClaimForItem(${item.item_id})">
+                Claim this Belonging
+              </button>
+            ` : ''}
+          `}
+        </div>
+      </div>
+    </div>
+  `;
 }
 
 // ==============================================================================
@@ -374,38 +632,36 @@ async function loadAllData() {
 
     const statusData = await res.json();
     state.isLiveApi = true;
-    el.dbEngineLabel.textContent = `${statusData.db_type} Database Connected`;
-    el.dbEngineLabel.parentElement.classList.remove("is-local");
+    if (el.dbEngineLabel) {
+      el.dbEngineLabel.textContent = `${statusData.db_type} Connected`;
+      el.dbEngineLabel.parentElement.classList.remove("is-local");
+    }
 
-    // Fetch items
     const itemsRes = await fetch("/api/items");
     const itemsData = await itemsRes.json();
     state.items = itemsData.items || [];
 
-    // Fetch claims
     const claimsRes = await fetch("/api/claims");
     const claimsData = await claimsRes.json();
     state.claims = claimsData.claims || [];
 
-    // Fetch lockers
     const lockersRes = await fetch("/api/lockers");
     const lockersData = await lockersRes.json();
     state.lockers = lockersData.lockers || [];
 
-    // Fetch audit
     const auditRes = await fetch("/api/audit");
     const auditData = await auditRes.json();
     state.audit = auditData.history || [];
 
-    // Fetch analytics
     const analyticsRes = await fetch("/api/analytics");
     state.analytics = await analyticsRes.json();
 
   } catch (err) {
-    console.warn("REST API connection unavailable. Operating in high-fidelity local mode.", err);
     state.isLiveApi = false;
-    el.dbEngineLabel.textContent = "Local High-Fidelity Engine (Portable)";
-    el.dbEngineLabel.parentElement.classList.add("is-local");
+    if (el.dbEngineLabel) {
+      el.dbEngineLabel.textContent = "Local Offline Engine";
+      el.dbEngineLabel.parentElement.classList.add("is-local");
+    }
 
     if (state.items.length === 0) {
       state.items = [...OFFLINE_SEED_ITEMS];
@@ -437,33 +693,24 @@ function generateLocalLockersAndAudit() {
   ];
 }
 
-// ==============================================================================
-// METRICS & KPIS
-// ==============================================================================
-
+// Metrics
 function updateMetrics() {
   const totalItems = state.items.length;
   const inCustody = state.items.filter(i => i.status === "IN_CUSTODY").length;
   const pendingClaims = state.claims.filter(c => c.claim_status === "PENDING").length;
-  const totalValuation = state.items.reduce((sum, i) => sum + (parseFloat(i.reward_or_value) || 0), 0);
   const returnedCount = state.items.filter(i => i.status === "VERIFIED_RETURNED").length;
 
-  el.kpiTotalItems.textContent = totalItems;
-  el.kpiInCustody.textContent = inCustody;
-  el.kpiPendingClaims.textContent = pendingClaims;
-  el.kpiTotalVal.textContent = `₹${totalValuation.toLocaleString('en-IN')}`;
-  el.kpiReturnedCount.textContent = returnedCount;
+  if (el.kpiTotalItems) el.kpiTotalItems.textContent = totalItems;
+  if (el.kpiInCustody) el.kpiInCustody.textContent = inCustody;
+  if (el.kpiPendingClaims) el.kpiPendingClaims.textContent = pendingClaims;
+  if (el.kpiReturnedCount) el.kpiReturnedCount.textContent = returnedCount;
 
-  el.badgeItemsCount.textContent = totalItems;
-  el.badgeClaimsCount.textContent = pendingClaims;
-  el.badgeLockersCount.textContent = state.lockers.length;
-  el.badgeAuditCount.textContent = state.audit.length;
-  el.stackCountTag.textContent = `Depth: ${state.audit.length}`;
+  if (el.badgeItemsCount) el.badgeItemsCount.textContent = totalItems;
+  if (el.badgeClaimsCount) el.badgeClaimsCount.textContent = pendingClaims;
+  if (el.badgeLockersCount) el.badgeLockersCount.textContent = `${inCustody} Active Lockers`;
+  if (el.badgeAuditCount) el.badgeAuditCount.textContent = `${state.audit.length} Actions Logged`;
+  if (el.stackCountTag) el.stackCountTag.textContent = `Depth: ${state.audit.length}`;
 }
-
-// ==============================================================================
-// RENDERERS
-// ==============================================================================
 
 const STATUS_DISPLAY = {
   IN_CUSTODY: { label: "In custody", cls: "tag-custody" },
@@ -480,13 +727,17 @@ function lockerNumber(code) {
   return String(code).replace(/^LOCKER-/, "");
 }
 
+// Render Inventory Cards
 function renderInventoryCards() {
-  const query = el.searchInventory.value.trim().toLowerCase();
-  const typeFilter = el.filterType.value;
-  const statusFilter = el.filterStatus.value;
-  const catFilter = el.filterCategory.value;
+  if (!el.itemsContainer) return;
 
-  const filtered = state.items.filter(item => {
+  const isIndexPage = window.location.pathname.endsWith("index.html") || window.location.pathname === "/" || window.location.pathname === "";
+  const query = el.searchInventory ? el.searchInventory.value.trim().toLowerCase() : "";
+  const typeFilter = el.filterType ? el.filterType.value : "";
+  const statusFilter = el.filterStatus ? el.filterStatus.value : "";
+  const catFilter = el.filterCategory ? el.filterCategory.value : "";
+
+  let filtered = state.items.filter(item => {
     if (typeFilter && item.item_type !== typeFilter) return false;
     if (statusFilter && item.status !== statusFilter) return false;
     if (catFilter && item.category !== catFilter) return false;
@@ -499,11 +750,16 @@ function renderInventoryCards() {
     return true;
   });
 
+  // On index dashboard, display the most recent 6 items to keep the page clean and uncongested
+  if (isIndexPage && filtered.length > 6) {
+    filtered = filtered.slice(0, 6);
+  }
+
   if (filtered.length === 0) {
     el.itemsContainer.innerHTML = `
       <div class="empty-state">
-        <h4>No items match</h4>
-        <p>Clear the search or change a filter to see more items.</p>
+        <h4>No matching items</h4>
+        <p>Clear the search filter or register a new property report.</p>
       </div>
     `;
     return;
@@ -516,10 +772,10 @@ function renderInventoryCards() {
     const valFormatted = `₹${(parseFloat(item.reward_or_value) || 0).toLocaleString('en-IN')}`;
     const lockerPlate = item.locker_code
       ? `<span class="locker-plate ${isHeld ? '' : 'is-released'}" title="${escapeHtml(item.locker_code)}">${escapeHtml(lockerNumber(item.locker_code))}</span>`
-      : `<span class="locker-plate is-none">${isFound ? 'No locker assigned' : 'Owner is searching'}</span>`;
+      : `<span class="locker-plate is-none">${isFound ? 'No locker' : 'Lost item'}</span>`;
 
     return `
-      <article class="item-card ${isHeld ? 'is-held' : ''}" data-id="${item.item_id}">
+      <article class="item-card ${isHeld ? 'is-held' : ''}" data-id="${item.item_id}" onclick="window.location.href='item.html?id=${item.item_id}'" style="cursor: pointer;">
         <span class="tag-hole" aria-hidden="true"></span>
         <div class="item-card-header">
           <div class="item-badge-group">
@@ -531,7 +787,11 @@ function renderInventoryCards() {
         </div>
 
         ${lockerPlate}
-        <h3 class="item-title">${escapeHtml(item.title)}</h3>
+        <h3 class="item-title">
+          <a href="item.html?id=${item.item_id}" onclick="event.stopPropagation();" style="color: inherit; text-decoration: none;">
+            ${escapeHtml(item.title)}
+          </a>
+        </h3>
         <p class="item-desc">${escapeHtml(item.description)}</p>
 
         <div class="item-meta-row">
@@ -544,27 +804,24 @@ function renderInventoryCards() {
             <span class="meta-val" title="${escapeHtml(item.reporter_name)}">${escapeHtml(item.reporter_name)}</span>
           </div>
           <div class="meta-item">
-            <span class="meta-label">Value</span>
+            <span class="meta-label">Valuation</span>
             <span class="meta-val is-money">${valFormatted}</span>
           </div>
         </div>
 
         <div class="item-actions">
-          ${isFound && item.status !== 'VERIFIED_RETURNED' ? `
-            <button class="btn btn-primary btn-sm" onclick="initiateClaimForItem(${item.item_id})">
-              File Claim
-            </button>
-          ` : `
-            <span class="item-date">${item.reported_date ? item.reported_date.split(' ')[0] : ''}</span>
-          `}
+          <a href="item.html?id=${item.item_id}" class="btn btn-secondary btn-sm" onclick="event.stopPropagation();" style="text-decoration: none;">
+            View Details &rarr;
+          </a>
 
           <div class="item-actions-group">
-            <button class="btn btn-secondary btn-sm" onclick="cycleStatus(${item.item_id})" title="Advance Status">
-              Toggle Status
-            </button>
-            <button class="btn btn-danger btn-sm" onclick="deleteItemRecord(${item.item_id})" title="Delete record" aria-label="Delete record #${item.item_id}">
-              <svg class="icon icon-sm" aria-hidden="true"><use href="#i-trash"/></svg>
-            </button>
+            ${isFound && item.status !== 'VERIFIED_RETURNED' ? `
+              <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); initiateClaimForItem(${item.item_id})">
+                File Claim
+              </button>
+            ` : `
+              <span class="item-date">${item.reported_date ? item.reported_date.split(' ')[0] : ''}</span>
+            `}
           </div>
         </div>
       </article>
@@ -572,33 +829,36 @@ function renderInventoryCards() {
   }).join("");
 }
 
+// Claims Queue
 function renderClaimsQueue() {
+  if (!el.queueItemsContainer) return;
+
   const pendingClaims = state.claims.filter(c => c.claim_status === "PENDING");
 
   if (pendingClaims.length === 0) {
     el.queueItemsContainer.innerHTML = `
       <div class="empty-state">
-        <h4>No claims waiting</h4>
-        <p>File a claim to add it to the verification queue.</p>
+        <h4>No claims pending review</h4>
+        <p>All verification requests are cleared.</p>
       </div>
     `;
-    el.selectedClaimTag.textContent = "Queue Empty";
-    state.selectedClaim = null;
+    if (el.selectedClaimTag) el.selectedClaimTag.textContent = "All Claims Reviewed";
     return;
   }
 
-  // Auto select head of queue if none selected
-  if (!state.selectedClaim || !pendingClaims.find(c => c.claim_id === state.selectedClaim.claim_id)) {
+  if (!state.selectedClaim || !pendingClaims.some(c => c.claim_id === state.selectedClaim.claim_id)) {
     state.selectedClaim = pendingClaims[0];
   }
 
-  el.selectedClaimTag.textContent = `Reviewing Claim #${state.selectedClaim.claim_id}`;
+  if (el.selectedClaimTag) {
+    el.selectedClaimTag.textContent = `Claim #${state.selectedClaim.claim_id}`;
+  }
 
   el.queueItemsContainer.innerHTML = pendingClaims.map((claim, index) => {
     const isSelected = state.selectedClaim && state.selectedClaim.claim_id === claim.claim_id;
     return `
       <div class="queue-ticket ${isSelected ? 'active' : ''}" onclick="selectClaim(${claim.claim_id})">
-        <span class="queue-pos-badge">Queue Pos: #${index + 1}</span>
+        <span class="queue-pos-badge">Pending Review #${index + 1}</span>
         <h4 class="ticket-title">
           Claim #${claim.claim_id}: ${escapeHtml(claim.item_title || 'Item #' + claim.item_id)}
         </h4>
@@ -612,20 +872,19 @@ function renderClaimsQueue() {
 }
 
 function selectClaim(claimId) {
-  const claim = state.claims.find(c => c.claim_id === claimId);
-  if (claim) {
-    state.selectedClaim = claim;
-    renderClaimsQueue();
-    showToast(`Loaded Claim #${claimId} into RPN Evaluator`, "info");
-  }
+  state.selectedClaim = state.claims.find(c => c.claim_id === claimId);
+  renderClaimsQueue();
 }
 
+// Lockers Grid
 function renderLockersGrid() {
+  if (!el.lockersContainer) return;
+
   if (state.lockers.length === 0) {
     el.lockersContainer.innerHTML = `
       <div class="empty-state">
-        <h4>No lockers in use</h4>
-        <p>Found items get a locker when they are reported.</p>
+        <h4>No storage lockers active</h4>
+        <p>Lockers are allocated when found items are checked in.</p>
       </div>
     `;
     return;
@@ -658,12 +917,15 @@ function renderLockersGrid() {
   }).join("");
 }
 
+// Audit Timeline
 function renderAuditTimeline() {
+  if (!el.auditTimelineContainer) return;
+
   if (state.audit.length === 0) {
     el.auditTimelineContainer.innerHTML = `
       <div class="empty-state">
         <h4>No actions recorded</h4>
-        <p>Reporting, claiming or updating an item adds an entry here.</p>
+        <p>Item registrations and status changes appear here.</p>
       </div>
     `;
     return;
@@ -671,7 +933,6 @@ function renderAuditTimeline() {
 
   el.auditTimelineContainer.innerHTML = state.audit.map(a => {
     const afterStr = typeof a.snapshot_after === 'object' ? JSON.stringify(a.snapshot_after, null, 2) : a.snapshot_after;
-
     return `
       <div class="timeline-item">
         <div class="timeline-header">
@@ -687,13 +948,15 @@ function renderAuditTimeline() {
   }).join("");
 }
 
+// Category Analytics
 function renderCategoryAnalytics() {
+  if (!el.categoryAnalyticsTbody) return;
+
   const cats = (state.analytics && state.analytics.categories) ? state.analytics.categories : [
     { category_name: "Electronics", total_items: 3, found_count: 1, lost_count: 2, total_declared_value: 154500.0 },
     { category_name: "Keys/Wallets", total_items: 1, found_count: 1, lost_count: 0, total_declared_value: 2500.0 },
     { category_name: "Documents/Cards", total_items: 1, found_count: 1, lost_count: 0, total_declared_value: 500.0 },
-    { category_name: "Clothing/Apparel", total_items: 1, found_count: 1, lost_count: 0, total_declared_value: 1800.0 },
-    { category_name: "Bags/Backpacks", total_items: 0, found_count: 0, lost_count: 0, total_declared_value: 0.0 }
+    { category_name: "Clothing/Apparel", total_items: 1, found_count: 1, lost_count: 0, total_declared_value: 1800.0 }
   ];
 
   el.categoryAnalyticsTbody.innerHTML = cats.map(c => `
@@ -707,23 +970,19 @@ function renderCategoryAnalytics() {
   `).join("");
 }
 
-// ==============================================================================
-// USER ACTIONS & MUTATIONS
-// ==============================================================================
-
+// Form Handlers
 async function handleReportItemSubmit(e) {
   e.preventDefault();
 
   const newItem = {
     title: document.getElementById("item-title-input").value.trim(),
     category: document.getElementById("item-category-input").value,
-    description: document.getElementById("item-desc-input").value.trim(),
     item_type: document.getElementById("item-type-input").value,
     location: document.getElementById("item-location-input").value.trim(),
-    status: document.getElementById("item-type-input").value === "FOUND" ? "IN_CUSTODY" : "REPORTED",
+    description: document.getElementById("item-desc-input").value.trim(),
+    reward_or_value: parseFloat(document.getElementById("item-val-input").value) || 0,
     reporter_name: document.getElementById("item-reporter-name").value.trim(),
-    reporter_contact: document.getElementById("item-reporter-contact").value.trim(),
-    reward_or_value: parseFloat(document.getElementById("item-val-input").value) || 0.0
+    reporter_contact: document.getElementById("item-reporter-contact").value.trim()
   };
 
   try {
@@ -734,37 +993,14 @@ async function handleReportItemSubmit(e) {
         body: JSON.stringify(newItem)
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to register item");
-      showToast(`Item #${data.item.item_id} registered and persisted in database!`, "success");
+      if (!res.ok) throw new Error(data.error || "Failed to create item");
+      showToast(`Item #${data.item.item_id} registered successfully!`, "success");
     } else {
-      // Local fallback
       newItem.item_id = state.items.length + 1;
+      newItem.status = newItem.item_type === "FOUND" ? "IN_CUSTODY" : "REPORTED";
       newItem.reported_date = new Date().toISOString().replace('T', ' ').substring(0, 19);
-      if (newItem.item_type === "FOUND") {
-        newItem.locker_code = `LOCKER-W${String(newItem.item_id).padStart(3, '0')}`;
-        state.lockers.push({
-          locker_id: state.lockers.length + 1,
-          locker_code: newItem.locker_code,
-          item_id: newItem.item_id,
-          item_title: newItem.title,
-          category: newItem.category,
-          status: "IN_CUSTODY",
-          custody_start_date: newItem.reported_date.split(' ')[0],
-          release_date: null,
-          is_released: false,
-          days_held: 0,
-          remarks: "Auto-allocated custody locker"
-        });
-      }
+      newItem.locker_code = newItem.item_type === "FOUND" ? `LOCKER-X${100 + newItem.item_id}` : null;
       state.items.unshift(newItem);
-      state.audit.unshift({
-        action_id: state.audit.length + 1,
-        item_id: newItem.item_id,
-        action_type: "INSERT",
-        snapshot_before: null,
-        snapshot_after: newItem,
-        performed_at: newItem.reported_date
-      });
       showToast(`Item #${newItem.item_id} registered successfully!`, "success");
     }
 
@@ -779,14 +1015,19 @@ async function handleReportItemSubmit(e) {
 
 function initiateClaimForItem(itemId) {
   populateClaimSelectDropdown();
-  el.claimItemSelect.value = String(itemId);
+  if (el.claimItemSelect) el.claimItemSelect.value = String(itemId);
   openModal(el.modalSubmitClaim);
 }
 
 function populateClaimSelectDropdown() {
+  if (!el.claimItemSelect) return;
   const foundItems = state.items.filter(i => i.item_type === "FOUND" && i.status !== "VERIFIED_RETURNED");
+  if (foundItems.length === 0) {
+    el.claimItemSelect.innerHTML = `<option value="">No found items currently in custody</option>`;
+    return;
+  }
   el.claimItemSelect.innerHTML = foundItems.map(i => `
-    <option value="${i.item_id}">#${i.item_id}: ${escapeHtml(i.title)} (${i.category} - ${i.location})</option>
+    <option value="${i.item_id}">#${i.item_id} - ${escapeHtml(i.title)} (${escapeHtml(i.location)})</option>
   `).join("");
 }
 
@@ -794,6 +1035,11 @@ async function handleSubmitClaimSubmit(e) {
   e.preventDefault();
 
   const targetItemId = parseInt(el.claimItemSelect.value);
+  if (!targetItemId) {
+    showToast("Please select a target item.", "error");
+    return;
+  }
+
   const newClaim = {
     item_id: targetItemId,
     claimant_name: document.getElementById("claimant-name-input").value.trim(),
@@ -810,7 +1056,7 @@ async function handleSubmitClaimSubmit(e) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to submit claim");
-      showToast(`Claim #${data.claim.claim_id} enqueued into FIFO Queue!`, "success");
+      showToast(`Claim #${data.claim.claim_id} submitted for verification!`, "success");
     } else {
       const targetItem = state.items.find(i => i.item_id === targetItemId);
       newClaim.claim_id = state.claims.length + 1;
@@ -823,16 +1069,12 @@ async function handleSubmitClaimSubmit(e) {
 
       state.claims.push(newClaim);
       if (targetItem) targetItem.status = "CLAIM_PENDING";
-
-      showToast(`Claim #${newClaim.claim_id} enqueued in FIFO Queue!`, "success");
+      showToast(`Claim #${newClaim.claim_id} submitted for verification!`, "success");
     }
 
     closeModal(el.modalSubmitClaim);
     el.formSubmitClaim.reset();
     await loadAllData();
-
-    // Switch to claims tab
-    document.querySelector("[data-tab='tab-claims']").click();
 
   } catch (err) {
     showToast(err.message, "error");
@@ -841,7 +1083,7 @@ async function handleSubmitClaimSubmit(e) {
 
 async function handleSettleClaim(decision) {
   if (!state.selectedClaim) {
-    showToast("No claim selected in FIFO queue.", "error");
+    showToast("No claim selected for review.", "error");
     return;
   }
 
@@ -863,9 +1105,8 @@ async function handleSettleClaim(decision) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Transaction failed");
-      showToast(`🛡️ ACID Transaction Committed: Claim #${claimId} ${decision}`, "success");
+      showToast(`Claim #${claimId} ${decision} successfully`, "success");
     } else {
-      // Local atomic emulation
       const claim = state.claims.find(c => c.claim_id === claimId);
       const item = state.items.find(i => i.item_id === itemId);
       const locker = state.lockers.find(l => l.item_id === itemId && !l.release_date);
@@ -894,7 +1135,7 @@ async function handleSettleClaim(decision) {
         performed_at: new Date().toISOString().replace('T', ' ').substring(0, 19)
       });
 
-      showToast(`🛡️ ACID Transaction Committed: Claim #${claimId} ${decision}`, "success");
+      showToast(`Claim #${claimId} ${decision} successfully`, "success");
     }
 
     state.selectedClaim = null;
@@ -914,11 +1155,11 @@ async function handleUndoAction() {
       showToast(`↩ ${data.message}`, "success");
     } else {
       if (state.audit.length === 0) {
-        showToast("LIFO undo stack is empty.", "error");
+        showToast("No actions available to rollback.", "error");
         return;
       }
       const popped = state.audit.shift();
-      showToast(`↩ Popped LIFO Stack: Undid ${popped.action_type} for Item #${popped.item_id}`, "success");
+      showToast(`↩ Undid ${popped.action_type} for Item #${popped.item_id}`, "success");
     }
     await loadAllData();
   } catch (err) {
@@ -943,90 +1184,41 @@ async function cycleStatus(itemId) {
       });
     } else {
       item.status = nextStatus;
-      state.audit.unshift({
-        action_id: state.audit.length + 1,
-        item_id: itemId,
-        action_type: "STATUS_CHANGE",
-        snapshot_before: { status: order[currIdx] },
-        snapshot_after: { status: nextStatus },
-        performed_at: new Date().toISOString().replace('T', ' ').substring(0, 19)
-      });
     }
-    showToast(`Updated Item #${itemId} status to ${nextStatus}`, "info");
+    showToast(`Status updated to ${nextStatus}`, "success");
     await loadAllData();
+    if (document.getElementById("item-detail-container")) {
+      setupItemDetail();
+    }
   } catch (err) {
     showToast(err.message, "error");
   }
 }
 
 async function deleteItemRecord(itemId) {
-  if (!confirm(`Are you sure you want to delete Item record #${itemId}?`)) return;
+  if (!confirm(`Are you sure you want to permanently delete record #${itemId}?`)) {
+    return;
+  }
 
   try {
     if (state.isLiveApi) {
-      await fetch(`/api/items/${itemId}`, { method: "DELETE" });
+      const res = await fetch(`/api/items/${itemId}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Delete failed");
+      showToast(`Record #${itemId} deleted.`, "info");
     } else {
-      const idx = state.items.findIndex(i => i.item_id === itemId);
-      if (idx !== -1) {
-        const del = state.items.splice(idx, 1)[0];
-        state.audit.unshift({
-          action_id: state.audit.length + 1,
-          item_id: itemId,
-          action_type: "DELETE",
-          snapshot_before: del,
-          snapshot_after: null,
-          performed_at: new Date().toISOString().replace('T', ' ').substring(0, 19)
-        });
-      }
+      state.items = state.items.filter(i => i.item_id !== itemId);
+      showToast(`Record #${itemId} deleted.`, "info");
     }
-    showToast(`Deleted Item #${itemId}`, "info");
-    await loadAllData();
+
+    if (document.getElementById("item-detail-container")) {
+      window.location.href = "items.html";
+    } else {
+      await loadAllData();
+    }
   } catch (err) {
     showToast(err.message, "error");
   }
-}
-
-// ==============================================================================
-// LAB PRACTICAL SUITE DEMO RUNNER
-// ==============================================================================
-
-function setupDemoButtons() {
-  const runDemo = async (phase, title) => {
-    el.terminalOutput.textContent = `[EXECUTING] Launching ${title}...\nStreaming database outputs and logs...\n`;
-    try {
-      if (state.isLiveApi) {
-        const res = await fetch(`/api/run-demo/${phase}`, { method: "POST" });
-        const data = await res.json();
-        el.terminalOutput.textContent = data.output || data.error || "Execution completed with empty output.";
-        showToast(`${title} finished (Exit Code: ${data.exit_code})`, data.exit_code === 0 ? "success" : "error");
-      } else {
-        // High fidelity simulated terminal output for portable offline demonstration
-        el.terminalOutput.textContent = `======================================================================
-  🏛️ LOST AND FOUND SYSTEM — ${title.toUpperCase()} (VERIFIED)
-======================================================================
-Connected to Active Database Engine: SQLITE / Fallback Relational Mode
-
-✔ Executed full test routines:
-  • All assertions passed (100% compliance)
-  • Referential constraints verified
-  • Real-time dataset hydrated and operational
-
-🎉 SUITE PASSED WITH ZERO ANOMALIES.`;
-        showToast(`${title} demonstrated successfully!`, "success");
-      }
-    } catch (err) {
-      el.terminalOutput.textContent = `Execution error: ${err.message}`;
-      showToast(err.message, "error");
-    }
-  };
-
-  document.getElementById("btn-run-phase1").addEventListener("click", () => runDemo("phase1", "Phase 1: Linear DSA Practical Suite"));
-  document.getElementById("btn-run-phase2").addEventListener("click", () => runDemo("phase2", "Phase 2: DDL & Aggregates Evaluation"));
-  document.getElementById("btn-run-phase3").addEventListener("click", () => runDemo("phase3", "Phase 3: Joins, Views & EXPLAIN Analysis"));
-  document.getElementById("btn-run-phase4").addEventListener("click", () => runDemo("phase4", "Phase 4: ACID Transactions & Concurrency"));
-  el.btnClearTerminal.addEventListener("click", () => {
-    el.terminalOutput.textContent = "Ready. Click any Phase Suite button above to execute practical scripts and view real-time database outputs.";
-  });
 }
 
 // ==============================================================================
@@ -1034,16 +1226,24 @@ Connected to Active Database Engine: SQLITE / Fallback Relational Mode
 // ==============================================================================
 
 function showToast(message, type = "info") {
+  let toastContainer = document.getElementById("toast-container");
+  if (!toastContainer) {
+    toastContainer = document.createElement("div");
+    toastContainer.id = "toast-container";
+    toastContainer.className = "toast-container";
+    document.body.appendChild(toastContainer);
+  }
+
   const toast = document.createElement("div");
   toast.className = `toast ${type}`;
   toast.innerHTML = `
     <span>${type === 'success' ? '✔' : type === 'error' ? '✖' : 'ℹ'}</span>
     <span>${escapeHtml(message)}</span>
   `;
-  while (el.toastContainer.children.length >= 2) {
-    el.toastContainer.firstElementChild.remove();
+  while (toastContainer.children.length >= 2) {
+    toastContainer.firstElementChild.remove();
   }
-  el.toastContainer.appendChild(toast);
+  toastContainer.appendChild(toast);
 
   setTimeout(() => {
     toast.style.opacity = "0";
